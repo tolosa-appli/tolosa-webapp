@@ -1,33 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', 'Poppins', Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer base {
   :root {
-    --background: 354 67% 94%;
+    --background: 354 67% 98%;
     --foreground: 342 96% 15%;
-    --card: 0 43% 92%;
+    --card: 0 0% 100%;
     --card-foreground: 342 96% 15%;
-    --popover: 0 43% 92%;
+    --popover: 0 0% 100%;
     --popover-foreground: 342 96% 15%;
-    --primary: 23 100% 42%;
+    --primary: 345 83% 47%;
     --primary-foreground: 0 0% 100%;
     --secondary: 352 53% 76%;
     --secondary-foreground: 342 96% 15%;
-    --muted: 0 56% 90%;
+    --muted: 0 0% 96%;
     --muted-foreground: 342 96% 35%;
-    --accent: 23 100% 45%;
+    --accent: 345 83% 47%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 342 95% 33%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 43% 88%;
-    --input: 0 43% 88%;
-    --ring: 23 100% 42%;
-    --radius: 0.5rem;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 345 83% 47%;
+    --radius: 1rem;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -80,11 +84,210 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', 'Inter', sans-serif;
+    font-weight: 600;
+  }
+}
+
+@layer components {
+  .glass {
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background-color: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.125);
+  }
+  
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  }
+  
+  .gradient-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .gradient-border {
+    position: relative;
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(135deg, #667eea, #764ba2) border-box;
+    border: 2px solid transparent;
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s ease-in-out infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .goog-te-gadget-simple {
-  background-color: #EBB68F !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 6px 12px !important;
+  border-radius: 20px !important;
+  color: #374151 !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.3s ease !important;
+  min-width: 80px !important;
+  text-align: center !important;
+}
+
+.goog-te-gadget-simple:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+/* Style the dropdown arrow */
+.goog-te-gadget-simple .goog-te-combo {
+  background: transparent !important;
   border: none !important;
-  padding: 5px !important;
-  border-radius: 4px !important;
+  color: #374151 !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  cursor: pointer !important;
+}
+
+/* Hide the "Powered by" text */
+.goog-te-gadget-simple .goog-te-gadget-icon {
+  display: none !important;
+}
+
+.goog-te-gadget-simple > span > a {
+  display: none !important;
+}
+
+/* Add custom "Languages" text */
+.goog-te-gadget-simple::before {
+  content: "Languages" !important;
+  color: #374151 !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  margin-right: 6px !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Hide the select when no option is selected to show our custom text */
+.goog-te-gadget-simple .goog-te-combo:invalid {
+  color: transparent !important;
+}
+
+.goog-te-gadget-simple .goog-te-combo option {
+  background: white !important;
+  color: #374151 !important;
+  padding: 4px 8px !important;
+}
+
+/* Style the banner that appears */
+.goog-te-banner-frame {
+  display: none !important;
+}
+
+.goog-te-menu-frame {
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+/* Remove the Google Translate branding */
+.goog-logo-link {
+  display: none !important;
+}
+
+.goog-te-gadget {
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Position the translate widget */
+.translate-widget {
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  z-index: 9999 !important;
+}
+
+@media (max-width: 640px) {
+  .translate-widget {
+    top: 80px !important;
+    right: 15px !important;
+  }
+  
+  .goog-te-gadget-simple {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    min-width: 70px !important;
+  }
+  
+  .goog-te-gadget-simple::before {
+    content: "Lang" !important;
+    margin-right: 4px !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }

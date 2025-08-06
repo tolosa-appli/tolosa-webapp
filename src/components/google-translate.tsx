@@ -6,7 +6,9 @@ import React from 'react';
 const GoogleTranslate = () => {
   return (
     <>
-      <div id="google_translate_element"></div>
+      <div className="translate-widget">
+        <div id="google_translate_element"></div>
+      </div>
       <Script id="google-translate-init" strategy="afterInteractive">
         {`
           function googleTranslateElementInit() {

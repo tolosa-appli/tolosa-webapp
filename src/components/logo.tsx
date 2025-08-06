@@ -7,11 +7,11 @@ export function Logo() {
       <Image
         src="http://bilingue31.free.fr/Logo_Tolosa_Rose.jpg"
         alt="Logo Cossí va ?"
-        width={100}
-        height={100}
-        className="rounded-full"
+        width={80}
+        height={80}
+        className="rounded-full sm:w-[80px] sm:h-[80px] lg:w-[110px] lg:h-[70px]"
       />
-      <span className="font-bold text-xl font-headline text-foreground group-data-[collapsible=icon]:hidden">
+      <span className="hidden md:block font-bold text-lg sm:text-xl font-headline text-foreground">
         Au pays de la chocolatine
       </span>
     </Link>
