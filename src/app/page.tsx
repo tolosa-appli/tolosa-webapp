@@ -1,174 +1,36 @@
 
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Users,
-  MessageSquare,
-  CalendarDays,
-  Car,
-  Home,
-  Briefcase,
-  Megaphone,
-  GraduationCap,
-  Heart,
-  UserCheck,
-  ClipboardList,
-  Languages,
-  ExternalLink,
-  ThumbsUp,
-  Handshake,
   ArrowRight,
   Sparkles,
   MapPin,
-  Star
+  Star,
+  Handshake,
+  Heart,
+  Languages,
 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import GoogleTranslate from '@/components/google-translate';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-
-const features = [
-  {
-    icon: Users,
-    title: 'Membres',
-    description: 'Trouvez et connectez-vous avec de nouveaux amis.',
-    href: '/login',
-    gradient: 'from-blue-500 to-purple-600',
-    bgColor: 'bg-blue-50',
-  },
-  {
-    icon: MessageSquare,
-    title: 'Forum de discussion',
-    description: 'Participez à des discussions sur divers sujets.',
-    href: '/login',
-    gradient: 'from-green-500 to-teal-600',
-    bgColor: 'bg-green-50',
-  },
-  {
-    icon: CalendarDays,
-    title: 'Sorties à Toulouse',
-    description: 'Créez et rejoignez des sorties et activités.',
-    href: '/login',
-    gradient: 'from-orange-500 to-red-600',
-    bgColor: 'bg-orange-50',
-  },
-  {
-    icon: Car,
-    title: 'Covoiturage',
-    description: 'Proposez ou cherchez des trajets.',
-    href: '/login',
-    gradient: 'from-indigo-500 to-blue-600',
-    bgColor: 'bg-indigo-50',
-  },
-  {
-    icon: Home,
-    title: 'Logement',
-    description: 'Trouvez votre prochain logement ou colocataire.',
-    href: '/login',
-    gradient: 'from-emerald-500 to-green-600',
-    bgColor: 'bg-emerald-50',
-  },
-  {
-    icon: Briefcase,
-    title: 'Emploi',
-    description: 'Découvrez des offres d\'emploi locales.',
-    href: '/login',
-    gradient: 'from-violet-500 to-purple-600',
-    bgColor: 'bg-violet-50',
-  },
-  {
-    icon: Megaphone,
-    title: 'Petites Annonces',
-    description: 'Achetez, vendez ou échangez des biens et services.',
-    href: '/login',
-    gradient: 'from-pink-500 to-rose-600',
-    bgColor: 'bg-pink-50',
-  },
-  {
-    icon: GraduationCap,
-    title: 'Stage & Alternance',
-    description: 'Opportunités pour les étudiants et jeunes diplômés.',
-    href: '/login',
-    gradient: 'from-cyan-500 to-blue-600',
-    bgColor: 'bg-cyan-50',
-  },
-  {
-    icon: Heart,
-    title: 'Sorties entre filles',
-    description: 'Un espace dédié pour les sorties entre filles.',
-    href: '/login',
-    gradient: 'from-rose-500 to-pink-600',
-    bgColor: 'bg-rose-50',
-  },
-  {
-    icon: UserCheck,
-    title: 'Sorties étudiantes',
-    description: 'Rencontrez d\'autres étudiants et participez à des évènements.',
-    href: '/login',
-    gradient: 'from-amber-500 to-orange-600',
-    bgColor: 'bg-amber-50',
-  },
-  {
-    icon: ClipboardList,
-    title: 'Questionnaires & Expériences',
-    description: 'Participez à des questionnaires pour des mémoires ou des thèses ou à des expériences',
-    href: '/login',
-    gradient: 'from-slate-500 to-gray-600',
-    bgColor: 'bg-slate-50',
-  },
-  {
-    icon: Languages,
-    title: 'Café des langues',
-    description: 'Pratiquez des langues avec d\'autres membres.',
-    href: '/login',
-    gradient: 'from-lime-500 to-green-600',
-    bgColor: 'bg-lime-50',
-  },
-  {
-    icon: ExternalLink,
-    title: 'Évènements Meetup',
-    description: 'Découvrez les événements du groupe partenaire.',
-    href: '/login',
-    gradient: 'from-sky-500 to-blue-600',
-    bgColor: 'bg-sky-50',
-  },
-  {
-    icon: ThumbsUp,
-    title: 'Groupes Facebook',
-    description: 'Découvrez les groupes Facebook partenaires.',
-    href: '/login',
-    gradient: 'from-blue-600 to-indigo-700',
-    bgColor: 'bg-blue-50',
-  },
-];
-
-const topCarouselImages = [
-  'http://bilingue31.free.fr/Accueil_afterwork_224.jpg',
-  'http://bilingue31.free.fr/Accueil_rando_224.jpg',
-  'http://bilingue31.free.fr/Accueil_danse_224.jpg',
-];
-
-const middleCarouselImages = [
-  'http://bilingue31.free.fr/Accueil_concert_224.jpg',
-  'http://bilingue31.free.fr/Accueil_jeux1_224.jpg',
-  'http://bilingue31.free.fr/Accueil_lecture3_224.jpg',
-];
-
-const bottomCarouselImages = [
-    'http://bilingue31.free.fr/Accueil_musee2_224.jpg',
-    'http://bilingue31.free.fr/Accueil_piquenique2_224.jpg',
-    'http://bilingue31.free.fr/Accueil_restaurant_224.jpg',
-];
-
-const finalCarouselImages = [
-    'http://bilingue31.free.fr/Accueil_theatre_224.jpg',
-    'http://bilingue31.free.fr/Accueil_visite_224.jpg',
-    'http://bilingue31.free.fr/Accueil_yoga_224.jpg',
-];
-
+import { useGetFeatures } from '@/hooks/useFeatures';
+import { useGetPartners } from '@/hooks/usePartners';
+import { useGetCarouselImages } from '@/hooks/useCarouselImages';
+import { getIconComponent } from '@/lib/icon-utils';
+import { getGradient, getBgColor, getTextColor, getHoverTextColor, getFeatureUrl } from '@/lib/color-utils';
 
 export default function HomePage() {
+  // API calls for data
+  const { data: features = [], isLoading: featuresLoading } = useGetFeatures();
+  const { data: partners = [], isLoading: partnersLoading } = useGetPartners();
+  const { data: topCarouselImages = [] } = useGetCarouselImages('top');
+  const { data: middleCarouselImages = [] } = useGetCarouselImages('middle');
+  const { data: bottomCarouselImages = [] } = useGetCarouselImages('bottom');
+  const { data: finalCarouselImages = [] } = useGetCarouselImages('final');
   return (
     <div className="flex flex-col min-h-screen relative bg-white">
       {/* Background Image */}
@@ -285,14 +147,14 @@ export default function HomePage() {
               className="w-full max-w-6xl mx-auto"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
-                {topCarouselImages.map((src, index) => (
-                  <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
+                {topCarouselImages.map((image, index) => (
+                  <CarouselItem key={image.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
                     <div className="group cursor-pointer">
                       <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform group-hover:scale-105 glass-modern">
                         <CardContent className="p-0 relative aspect-square">
                           <Image 
-                            src={src} 
-                            alt={`Image de sortie ${index + 1}`} 
+                            src={image.src} 
+                            alt={image.alt} 
                             width={600} 
                             height={600} 
                             className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110" 
@@ -323,32 +185,54 @@ export default function HomePage() {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {features.map((feature, index) => (
-                <Link href={feature.href} key={feature.title}>
-                  <Card className="group h-full border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-white/80 backdrop-blur-sm overflow-hidden">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
-                    
-                    <CardHeader className="relative">
-                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
-                        <feature.icon className="w-8 h-8 text-white" />
-                      </div>
-                      <CardTitle className="text-lg font-bold text-gray-800 group-hover:text-gray-900 transition-colors">
-                        {feature.title}
-                      </CardTitle>
+              {featuresLoading ? (
+                // Loading skeleton
+                Array.from({ length: 8 }).map((_, index) => (
+                  <Card key={index} className="h-full border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+                    <CardHeader>
+                      <div className="w-16 h-16 rounded-2xl bg-gray-200 animate-pulse mb-4"></div>
+                      <div className="h-5 bg-gray-200 rounded animate-pulse mb-2"></div>
                     </CardHeader>
-                    
-                    <CardContent className="relative">
-                      <p className="text-gray-600 group-hover:text-gray-700 transition-colors leading-relaxed mb-4">
-                        {feature.description}
-                      </p>
-                      <div className="flex items-center text-sm font-medium text-rose-600 group-hover:text-rose-700 transition-colors">
-                        <span>Découvrir</span>
-                        <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
-                      </div>
+                    <CardContent>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
                     </CardContent>
                   </Card>
-                </Link>
-              ))}
+                ))
+              ) : (
+                features.map((feature, index) => {
+                  const IconComponent = getIconComponent(feature.icon);
+                  const gradient = getGradient(feature.color);
+                  const featureUrl = getFeatureUrl(feature.slug, false); // false = not logged in
+                  
+                  return (
+                    <Link href={featureUrl} key={feature.id}>
+                      <Card className="group h-full border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-white/80 backdrop-blur-sm overflow-hidden">
+                        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
+                        
+                        <CardHeader className="relative">
+                          <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-4 shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
+                            <IconComponent className="w-8 h-8 text-white" />
+                          </div>
+                          <CardTitle className="text-lg font-bold text-gray-800 group-hover:text-gray-900 transition-colors">
+                            {feature.title}
+                          </CardTitle>
+                        </CardHeader>
+                        
+                        <CardContent className="relative">
+                          <p className="text-gray-600 group-hover:text-gray-700 transition-colors leading-relaxed mb-4">
+                            {feature.description}
+                          </p>
+                          <div className="flex items-center text-sm font-medium text-rose-600 group-hover:text-rose-700 transition-colors">
+                            <span>Découvrir</span>
+                            <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })
+              )}
             </div>
           </div>
         </section>
@@ -364,14 +248,14 @@ export default function HomePage() {
               className="w-full max-w-6xl mx-auto"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
-                {middleCarouselImages.map((src, index) => (
-                  <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
+                {middleCarouselImages.map((image, index) => (
+                  <CarouselItem key={image.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
                     <div className="group cursor-pointer">
                       <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform group-hover:scale-105 bg-white/80 backdrop-blur-sm">
                         <CardContent className="p-0 relative aspect-square">
                           <Image 
-                            src={src} 
-                            alt={`Image de sortie ${index + 1}`} 
+                            src={image.src} 
+                            alt={image.alt} 
                             width={600} 
                             height={600} 
                             className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110" 
@@ -400,47 +284,51 @@ export default function HomePage() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              <a 
-                href="http://www.bilingue.fr.nf/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="group block p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 border border-blue-100"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
-                    <Languages className="h-6 w-6 text-white" />
+              {partnersLoading ? (
+                // Loading skeleton
+                Array.from({ length: 2 }).map((_, index) => (
+                  <div key={index} className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl shadow-lg border border-gray-100">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-gray-200 animate-pulse"></div>
+                      <div className="h-6 bg-gray-200 rounded animate-pulse w-32"></div>
+                    </div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
                   </div>
-                  <h4 className="font-bold text-xl text-blue-800 group-hover:text-blue-900 transition-colors">Bilingue 31</h4>
-                </div>
-                <p className="text-gray-600 group-hover:text-gray-700 transition-colors leading-relaxed">
-                  Le site pour pratiquer les langues à Toulouse.
-                </p>
-                <div className="flex items-center mt-4 text-blue-600 group-hover:text-blue-700 transition-colors">
-                  <span className="font-medium">Visiter le site</span>
-                  <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
-                </div>
-              </a>
-              
-              <a 
-                href="http://happypeople.fr.nf/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="group block p-8 bg-gradient-to-br from-rose-50 to-pink-50 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 border border-rose-100"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-rose-500 to-pink-600 flex items-center justify-center">
-                    <Heart className="h-6 w-6 text-white" />
-                  </div>
-                  <h4 className="font-bold text-xl text-rose-800 group-hover:text-rose-900 transition-colors">Happy People 31</h4>
-                </div>
-                <p className="text-gray-600 group-hover:text-gray-700 transition-colors leading-relaxed">
-                  Le réseau social pour se faire des amis et sortir à Toulouse.
-                </p>
-                <div className="flex items-center mt-4 text-rose-600 group-hover:text-rose-700 transition-colors">
-                  <span className="font-medium">Visiter le site</span>
-                  <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
-                </div>
-              </a>
+                ))
+              ) : (
+                partners.map((partner) => {
+                  const IconComponent = getIconComponent(partner.icon);
+                  const gradient = getGradient(partner.color);
+                  const bgColor = getBgColor(partner.color);
+                  const textColor = getTextColor(partner.color);
+                  const hoverTextColor = getHoverTextColor(partner.color);
+                  
+                  return (
+                    <a 
+                      key={partner.id}
+                      href={partner.website} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className={`group block p-8 bg-gradient-to-br ${bgColor} rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 border border-gray-100`}
+                    >
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${gradient} flex items-center justify-center`}>
+                          <IconComponent className="h-6 w-6 text-white" />
+                        </div>
+                        <h4 className={`font-bold text-xl ${textColor} ${hoverTextColor} transition-colors`}>{partner.name}</h4>
+                      </div>
+                      <p className="text-gray-600 group-hover:text-gray-700 transition-colors leading-relaxed">
+                        {partner.description}
+                      </p>
+                      <div className={`flex items-center mt-4 ${textColor} ${hoverTextColor} transition-colors`}>
+                        <span className="font-medium">Visiter le site</span>
+                        <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </a>
+                  );
+                })
+              )}
             </div>
           </div>
         </section>
@@ -456,14 +344,14 @@ export default function HomePage() {
               className="w-full max-w-6xl mx-auto"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
-                {bottomCarouselImages.map((src, index) => (
-                  <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
+                {bottomCarouselImages.map((image, index) => (
+                  <CarouselItem key={image.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
                     <div className="group cursor-pointer">
                       <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform group-hover:scale-105 bg-white/80 backdrop-blur-sm">
                         <CardContent className="p-0 relative aspect-square">
                           <Image 
-                            src={src} 
-                            alt={`Image de sortie ${index + 1}`} 
+                            src={image.src} 
+                            alt={image.alt} 
                             width={600} 
                             height={600} 
                             className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110" 
@@ -516,14 +404,14 @@ export default function HomePage() {
               className="w-full max-w-6xl mx-auto"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
-                {finalCarouselImages.map((src, index) => (
-                  <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
+                {finalCarouselImages.map((image, index) => (
+                  <CarouselItem key={image.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
                     <div className="group cursor-pointer">
                       <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform group-hover:scale-105 bg-white/80 backdrop-blur-sm">
                         <CardContent className="p-0 relative aspect-square">
                           <Image 
-                            src={src} 
-                            alt={`Image de sortie ${index + 1}`} 
+                            src={image.src} 
+                            alt={image.alt} 
                             width={600} 
                             height={600} 
                             className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110" 

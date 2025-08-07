@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Search, MapPin, Clock, PlusCircle, Trash2, Flag, UserX } from 'lucide-react';
+import { Search, MapPin, Clock, PlusCircle, Trash2, Flag, UserX, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -20,7 +20,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { adsData } from './data';
+import { useGetAds, useCreateAd, useDeleteAd, useReportAd } from '@/hooks/useAds';
+import { CreateAdData, Ad } from '@/types';
+import { 
+  adCategories, 
+  adConditions, 
+  formatPrice, 
+  getContactLabel, 
+  getCategoryColor,
+  getAdCategoryInfo,
+  getAdConditionInfo 
+} from '@/lib/ad-utils';
 
 // --- Simulation de l'utilisateur connecté ---
 const currentUser = {
@@ -34,25 +44,54 @@ const adSchema = z.object({
   title: z.string().min(5, "Le titre doit contenir au moins 5 caractères."),
   description: z.string().min(10, "La description doit contenir au moins 10 caractères."),
   location: z.string().min(3, "Le lieu doit contenir au moins 3 caractères."),
-  price: z.coerce.number().optional().default(0),
+  price: z.coerce.number().min(0, "Le prix doit être positif.").default(0),
+  category: z.enum(['sale', 'purchase', 'service', 'free', 'exchange'], {
+    required_error: "Veuillez choisir une catégorie.",
+  }),
+  condition: z.enum(['new', 'like-new', 'good', 'fair', 'poor']).optional(),
 });
 
 type AdFormData = z.infer<typeof adSchema>;
 
 const AdForm = ({ setDialogOpen }: { setDialogOpen: (open: boolean) => void }) => {
     const { toast } = useToast();
-    const { register, handleSubmit, formState: { errors }, reset } = useForm<AdFormData>({
+    const createAdMutation = useCreateAd();
+    const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<AdFormData>({
         resolver: zodResolver(adSchema),
     });
 
-    const onSubmit = (data: AdFormData) => {
-        console.log("New ad submitted:", data);
-        toast({
-            title: "òsca !",
-            description: "Annonce publiée avec succès.",
-        });
-        reset();
-        setDialogOpen(false);
+    const selectedCategory = watch('category');
+    const showCondition = selectedCategory === 'sale' || selectedCategory === 'exchange';
+
+    const onSubmit = async (data: AdFormData) => {
+        try {
+            const createData: CreateAdData = {
+                title: data.title,
+                description: data.description,
+                location: data.location,
+                price: data.price,
+                category: data.category,
+                condition: data.condition,
+                contactInfo: {
+                    preferredContact: 'message',
+                },
+            };
+
+            await createAdMutation.mutateAsync(createData);
+            
+            toast({
+                title: "òsca !",
+                description: "Annonce publiée avec succès.",
+            });
+            reset();
+            setDialogOpen(false);
+        } catch (error) {
+            toast({
+                title: "Erreur",
+                description: "Une erreur est survenue lors de la publication.",
+                variant: "destructive",
+            });
+        }
     };
 
     return (
@@ -62,6 +101,43 @@ const AdForm = ({ setDialogOpen }: { setDialogOpen: (open: boolean) => void }) =
                 <Input id="title" placeholder="Ex: Vends guitare classique" {...register('title')} />
                 {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
             </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="category">Catégorie</Label>
+                <Select onValueChange={(value) => register('category').onChange({ target: { value } })}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Choisissez une catégorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {adCategories.map((category) => (
+                            <SelectItem key={category.value} value={category.value}>
+                                {category.label} - {category.description}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
+            </div>
+
+            {showCondition && (
+                <div className="grid gap-2">
+                    <Label htmlFor="condition">État (optionnel)</Label>
+                    <Select onValueChange={(value) => register('condition').onChange({ target: { value } })}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Choisissez l'état" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {adConditions.map((condition) => (
+                                <SelectItem key={condition.value} value={condition.value!}>
+                                    {condition.label} - {condition.description}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {errors.condition && <p className="text-sm text-destructive">{errors.condition.message}</p>}
+                </div>
+            )}
+
             <div className="grid gap-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea id="description" placeholder="Décrivez votre article ou service..." {...register('description')} />
@@ -80,8 +156,13 @@ const AdForm = ({ setDialogOpen }: { setDialogOpen: (open: boolean) => void }) =
                 </div>
             </div>
             <DialogFooter>
-                <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>Annuler</Button>
-                <Button type="submit">Publier l'annonce</Button>
+                <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>
+                    Annuler
+                </Button>
+                <Button type="submit" disabled={createAdMutation.isPending}>
+                    {createAdMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Publier l'annonce
+                </Button>
             </DialogFooter>
         </form>
     );
@@ -90,9 +171,29 @@ const AdForm = ({ setDialogOpen }: { setDialogOpen: (open: boolean) => void }) =
 export default function AdsPage() {
     const { toast } = useToast();
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortOption, setSortOption] = useState('date-desc');
+    const [sortOption, setSortOption] = useState('createdAt-desc');
+    const [categoryFilter, setCategoryFilter] = useState<Ad['category'] | 'all'>('all');
     const [isClient, setIsClient] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    // Parse sort option
+    const [sortField, sortDirection] = sortOption.split('-') as [keyof Pick<Ad, 'createdAt' | 'price' | 'title' | 'location'>, 'asc' | 'desc'];
+
+    // API calls
+    const { 
+        data: adsResponse, 
+        isLoading, 
+        error 
+    } = useGetAds({
+        search: searchTerm.length >= 3 ? searchTerm : undefined,
+        category: categoryFilter !== 'all' ? categoryFilter : undefined,
+        sortField,
+        sortDirection,
+        limit: 50,
+    });
+
+    const deleteAdMutation = useDeleteAd();
+    const reportAdMutation = useReportAd();
 
     useEffect(() => {
         setIsClient(true);
@@ -102,50 +203,48 @@ export default function AdsPage() {
         setSearchTerm(e.target.value);
     };
     
-    const handleReport = (adTitle: string) => {
-        toast({
-            title: "Signalement envoyé",
-            description: `Merci d'avoir signalé l'annonce "${adTitle}". Nous allons l'examiner.`,
-        });
+    const handleReport = async (adId: string, adTitle: string) => {
+        try {
+            await reportAdMutation.mutateAsync({ adId, reason: 'Contenu inapproprié' });
+            toast({
+                title: "Signalement envoyé",
+                description: `Merci d'avoir signalé l'annonce "${adTitle}". Nous allons l'examiner.`,
+            });
+        } catch (error) {
+            toast({
+                title: "Erreur",
+                description: "Une erreur est survenue lors du signalement.",
+                variant: "destructive",
+            });
+        }
     };
 
-    const filteredAndSortedAds = useMemo(() => {
-        let ads = [...adsData];
-
-        if (searchTerm.length >= 3) {
-            const lowercasedTerm = searchTerm.toLowerCase();
-            ads = ads.filter(ad =>
-                ad.title.toLowerCase().includes(lowercasedTerm) ||
-                ad.description.toLowerCase().includes(lowercasedTerm) ||
-                ad.location.toLowerCase().includes(lowercasedTerm)
-            );
+    const handleDelete = async (adId: string, adTitle: string) => {
+        try {
+            await deleteAdMutation.mutateAsync(adId);
+            toast({
+                title: "Annonce supprimée",
+                description: `L'annonce "${adTitle}" a été supprimée.`,
+            });
+        } catch (error) {
+            toast({
+                title: "Erreur",
+                description: "Une erreur est survenue lors de la suppression.",
+                variant: "destructive",
+            });
         }
+    };
 
-        switch (sortOption) {
-            case 'date-desc':
-                ads.sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime());
-                break;
-            case 'date-asc':
-                ads.sort((a, b) => new Date(a.postedAt).getTime() - new Date(b.postedAt).getTime());
-                break;
-            case 'price-asc':
-                ads.sort((a, b) => a.price - b.price);
-                break;
-            case 'price-desc':
-                ads.sort((a, b) => b.price - a.price);
-                break;
-            case 'location-asc':
-                ads.sort((a, b) => a.location.localeCompare(b.location));
-                break;
-        }
+    const ads = adsResponse?.ads || [];
+    const showEmptySearchMessage = searchTerm.length >= 3 && ads.length === 0;
 
-        return ads;
-    }, [searchTerm, sortOption]);
-    
-    const displayAds = searchTerm.length < 3 ? adsData : filteredAndSortedAds;
-    const showEmptySearchMessage = searchTerm.length >= 3 && filteredAndSortedAds.length === 0;
-
-
+    // --- Simulation de l'utilisateur connecté ---
+    const currentUser = {
+        id: 'admin1',
+        name: 'AdminUser',
+        role: 'admin' as 'user' | 'moderator' | 'admin',
+    };
+    // -----------------------------------------
     return (
         <div className="container mx-auto p-4 md:p-8">
             <Card>
@@ -167,13 +266,26 @@ export default function AdsPage() {
                                 onChange={handleSearchChange}
                             />
                         </div>
+                        <Select onValueChange={(value) => setCategoryFilter(value as Ad['category'] | 'all')} value={categoryFilter}>
+                            <SelectTrigger className="w-full sm:w-[200px]">
+                                <SelectValue placeholder="Toutes catégories" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Toutes catégories</SelectItem>
+                                {adCategories.map((category) => (
+                                    <SelectItem key={category.value} value={category.value}>
+                                        {category.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                         <Select onValueChange={setSortOption} defaultValue={sortOption}>
                             <SelectTrigger className="w-full sm:w-[200px]">
                                 <SelectValue placeholder="Trier par..." />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="date-desc">Plus récentes</SelectItem>
-                                <SelectItem value="date-asc">Plus anciennes</SelectItem>
+                                <SelectItem value="createdAt-desc">Plus récentes</SelectItem>
+                                <SelectItem value="createdAt-asc">Plus anciennes</SelectItem>
                                 <SelectItem value="price-asc">Prix (croissant)</SelectItem>
                                 <SelectItem value="price-desc">Prix (décroissant)</SelectItem>
                                 <SelectItem value="location-asc">Lieu (A-Z)</SelectItem>
@@ -186,7 +298,7 @@ export default function AdsPage() {
                                     Poster une annonce
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-[480px]">
+                            <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
                                 <DialogHeader>
                                     <DialogTitle>Nouvelle Annonce</DialogTitle>
                                 </DialogHeader>
@@ -198,15 +310,28 @@ export default function AdsPage() {
                     <div>
                         <h2 className="text-2xl font-bold font-headline mb-4">Toutes les annonces</h2>
                         
+                        {isLoading && (
+                            <div className="flex justify-center items-center py-10">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                                <span className="ml-2">Chargement des annonces...</span>
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="text-center text-destructive py-10">
+                                <p>Une erreur est survenue lors du chargement des annonces.</p>
+                            </div>
+                        )}
+
                         {searchTerm.length > 0 && searchTerm.length < 3 && (
                             <div className="text-center text-destructive py-10">
                                 <p>mot trop court, trois lettres minimum !</p>
                             </div>
                         )}
 
-                        {searchTerm.length >= 3 && filteredAndSortedAds.length > 0 && (
+                        {searchTerm.length >= 3 && ads.length > 0 && (
                              <div className="text-center text-muted-foreground mb-4">
-                                <p>tè ! On a trouvé {filteredAndSortedAds.length} résultat{filteredAndSortedAds.length > 1 ? 's' : ''} pour toi :</p>
+                                <p>tè ! On a trouvé {ads.length} résultat{ads.length > 1 ? 's' : ''} pour toi :</p>
                             </div>
                         )}
                         
@@ -216,75 +341,121 @@ export default function AdsPage() {
                             </div>
                         )}
 
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {(searchTerm.length < 3 ? adsData : filteredAndSortedAds).map(ad => (
-                                <Card key={ad.id} className="overflow-hidden flex flex-col group">
-                                     <div className="relative h-48 w-full">
-                                        <Image src={ad.image} alt={ad.title} layout="fill" objectFit="cover" data-ai-hint={ad.dataAiHint} />
-                                         <div className="absolute top-2 right-2">
-                                             <Badge variant="secondary" className="text-lg font-bold">
-                                                {ad.price > 0 ? `${ad.price} €` : 'Gratuit'}
-                                             </Badge>
-                                         </div>
-                                    </div>
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">{ad.title}</CardTitle>
-                                         <CardDescription className="text-sm text-muted-foreground pt-1">{ad.description.substring(0, 100)}{ad.description.length > 100 && '...'}</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="flex-grow">
-                                        <div className="flex items-center text-sm text-muted-foreground mb-2">
-                                            <MapPin className="w-4 h-4 mr-2 text-primary" />
-                                            <span>{ad.location}</span>
+                        {!isLoading && !error && (
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {ads.map((ad: Ad) => (
+                                    <Card key={ad.id} className="overflow-hidden flex flex-col group">
+                                         <div className="relative h-48 w-full">
+                                            <Image 
+                                                src={ad.images[0]} 
+                                                alt={ad.title} 
+                                                fill
+                                                className="object-cover"
+                                            />
+                                             <div className="absolute top-2 right-2">
+                                                 <Badge variant="secondary" className="text-lg font-bold">
+                                                    {formatPrice(ad.price)}
+                                                 </Badge>
+                                             </div>
+                                             <div className="absolute top-2 left-2">
+                                                 <Badge className={getCategoryColor(ad.category)}>
+                                                    {getAdCategoryInfo(ad.category)?.label}
+                                                 </Badge>
+                                             </div>
                                         </div>
-                                    </CardContent>
+                                        <CardHeader>
+                                            <CardTitle className="text-lg">{ad.title}</CardTitle>
+                                             <CardDescription className="text-sm text-muted-foreground pt-1">
+                                                {ad.description.substring(0, 100)}{ad.description.length > 100 && '...'}
+                                             </CardDescription>
+                                             {ad.condition && (
+                                                 <Badge variant="outline" className="w-fit">
+                                                     {getAdConditionInfo(ad.condition)?.label}
+                                                 </Badge>
+                                             )}
+                                        </CardHeader>
+                                        <CardContent className="flex-grow">
+                                            <div className="flex items-center text-sm text-muted-foreground mb-2">
+                                                <MapPin className="w-4 h-4 mr-2 text-primary" />
+                                                <span>{ad.location}</span>
+                                            </div>
+                                        </CardContent>
 
-                                    <CardFooter className="bg-muted/50 p-3 flex justify-between items-center">
-                                        <div className="flex items-center gap-2">
-                                            <Avatar className="h-6 w-6">
-                                                <AvatarImage src={ad.user.avatar} alt={ad.user.name} data-ai-hint={ad.user.dataAiHint} />
-                                                <AvatarFallback>{ad.user.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-medium">{ad.user.name}</span>
-                                                <div className="flex items-center text-xs text-muted-foreground">
-                                                    <Clock className="w-3 h-3 mr-1" />
-                                                    <span>{isClient ? formatDistanceToNow(new Date(ad.postedAt), { addSuffix: true, locale: fr }) : '...'}</span>
+                                        <CardFooter className="bg-muted/50 p-3 flex justify-between items-center">
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-6 w-6">
+                                                    <AvatarImage src={ad.user.avatar} alt={ad.user.name} />
+                                                    <AvatarFallback>{ad.user.name.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-medium">{ad.user.name}</span>
+                                                    <div className="flex items-center text-xs text-muted-foreground">
+                                                        <Clock className="w-3 h-3 mr-1" />
+                                                        <span>
+                                                            {isClient ? formatDistanceToNow(new Date(ad.createdAt), { addSuffix: true, locale: fr }) : '...'}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Button size="sm">Contacter</Button>
-                                            {(ad.user.name === currentUser.name || currentUser.role === 'admin') ? (
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Supprimer">
-                                                    <Trash2 className="h-4 w-4" />
+                                            <div className="flex items-center gap-1">
+                                                <Button size="sm">
+                                                    {getContactLabel(ad.contactInfo?.preferredContact || 'message')}
                                                 </Button>
-                                            ) : (
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground" title="Signaler" onClick={() => handleReport(ad.title)}>
-                                                    <Flag className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                            {currentUser.role === 'admin' && ad.user.name !== currentUser.name && (
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Suspendre l'utilisateur">
-                                                    <UserX className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </CardFooter>
-                                </Card>
-                            ))}
-                            
-                             {!showEmptySearchMessage && displayAds.length === 0 && (
-                                <div className="col-span-full text-center text-muted-foreground py-10">
-                                    <p>Aucune petite annonce pour le moment.</p>
-                                </div>
-                            )}
-                        </div>
+                                                {(ad.userId === currentUser.id || currentUser.role === 'admin') ? (
+                                                    <Button 
+                                                        size="icon" 
+                                                        variant="ghost" 
+                                                        className="h-8 w-8 text-destructive" 
+                                                        title="Supprimer"
+                                                        onClick={() => handleDelete(ad.id, ad.title)}
+                                                        disabled={deleteAdMutation.isPending}
+                                                    >
+                                                        {deleteAdMutation.isPending ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Trash2 className="h-4 w-4" />
+                                                        )}
+                                                    </Button>
+                                                ) : (
+                                                    <Button 
+                                                        size="icon" 
+                                                        variant="ghost" 
+                                                        className="h-8 w-8 text-muted-foreground" 
+                                                        title="Signaler" 
+                                                        onClick={() => handleReport(ad.id, ad.title)}
+                                                        disabled={reportAdMutation.isPending}
+                                                    >
+                                                        {reportAdMutation.isPending ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Flag className="h-4 w-4" />
+                                                        )}
+                                                    </Button>
+                                                )}
+                                                {currentUser.role === 'admin' && ad.userId !== currentUser.id && (
+                                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title="Suspendre l'utilisateur">
+                                                        <UserX className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </CardFooter>
+                                    </Card>
+                                ))}
+                                
+                                 {!showEmptySearchMessage && ads.length === 0 && !isLoading && (
+                                    <div className="col-span-full text-center text-muted-foreground py-10">
+                                        <p>Aucune petite annonce pour le moment.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
         </div>
     );
 }
+
 
     
 
