@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -76,7 +76,7 @@ const createOutingSchema = z.object({
 
 type CreateOutingFormData = z.infer<typeof createOutingSchema>;
 
-export default function CreateOutingPage() {
+function CreateOutingForm() {
     const { toast } = useToast();
     const searchParams = useSearchParams();
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -451,6 +451,19 @@ export default function CreateOutingPage() {
                 </div>
             </form>
         </div>
+    );
+}
+
+export default function CreateOutingPage() {
+    return (
+        <Suspense fallback={<div className="container mx-auto p-4 md:p-8">
+            <div className="mb-6">
+                <h1 className="text-3xl font-bold font-headline">Créer une sortie</h1>
+                <p className="text-muted-foreground">Chargement...</p>
+            </div>
+        </div>}>
+            <CreateOutingForm />
+        </Suspense>
     );
 }
 
