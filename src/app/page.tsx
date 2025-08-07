@@ -170,106 +170,113 @@ const finalCarouselImages = [
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      <GoogleTranslate />
+    <div className="flex flex-col min-h-screen relative bg-white">
+      {/* Background Image */}
+      <div 
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: "url('/bg.jpg')",
+          opacity: 0.3
+        }}
+      ></div>
       
-      {/* Modern Header with Glassmorphism */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-white/20 shadow-sm">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
-            {/* Mobile Layout: Logo on left, buttons on right */}
-            <div className="flex items-center md:hidden">
-              <Logo />
-            </div>
-            
-            {/* Desktop Layout: Buttons on left, logo centered, location on right */}
-            <div className="hidden md:flex items-center space-x-3 sm:space-x-4">
-              <Button asChild variant="destructive" className="rounded-full px-4 lg:px-6 py-2 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                <Link href="/login" className="font-medium text-sm lg:text-base">Connexion</Link>
-              </Button>
-              <Button asChild className="rounded-full px-4 lg:px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                <Link href="/signup" className="font-medium text-sm lg:text-base">Inscription</Link>
-              </Button>
-            </div>
-            
-            {/* Desktop: Centered Logo */}
-            <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
-              <Logo />
-            </div>
-            
-            {/* Right side: Location indicator (desktop) or buttons (mobile) */}
-            <div className="flex items-center space-x-2">
-              {/* Mobile buttons */}
-              <div className="flex md:hidden items-center space-x-2">
-                <Button asChild variant="destructive" className="rounded-full px-3 py-1.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                  <Link href="/login" className="font-medium text-xs">Connexion</Link>
+      {/* Background Overlay */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-br from-white/70 via-slate-50/80 to-rose-50/70"></div>
+
+      {/* Content */}
+      <div className="relative z-10">
+        <GoogleTranslate />
+      
+        {/* Modern Header with Enhanced Glassmorphism */}
+        <header className="sticky top-0 z-50 glass-modern border-b border-white/30 shadow-lg">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16 sm:h-20">
+              {/* Mobile Layout: Logo on left, buttons on right */}
+              <div className="flex items-center md:hidden">
+                <Logo />
+              </div>
+              
+              {/* Desktop Layout: Buttons on left, logo centered, location on right */}
+              <div className="hidden md:flex items-center space-x-3 sm:space-x-4">
+                <Button asChild variant="destructive" className="rounded-full px-4 lg:px-6 py-2 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                  <Link href="/login" className="font-medium text-sm lg:text-base">Connexion</Link>
                 </Button>
-                <Button asChild className="rounded-full px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                  <Link href="/signup" className="font-medium text-xs">Inscription</Link>
+                <Button asChild className="rounded-full px-4 lg:px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                  <Link href="/signup" className="font-medium text-sm lg:text-base">Inscription</Link>
                 </Button>
               </div>
               
-              {/* Desktop location indicator */}
-              <div className="hidden sm:flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-rose-500" />
-                <span className="text-sm font-medium text-gray-600">Toulouse</span>
+              {/* Desktop: Centered Logo */}
+              <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
+                <Logo />
+              </div>
+              
+              {/* Right side: Location indicator (desktop) or buttons (mobile) */}
+              <div className="flex items-center space-x-2">
+                {/* Mobile buttons */}
+                <div className="flex md:hidden items-center space-x-2">
+                  <Button asChild variant="destructive" className="rounded-full px-3 py-1.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                    <Link href="/login" className="font-medium text-xs">Connexion</Link>
+                  </Button>
+                  <Button asChild className="rounded-full px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                    <Link href="/signup" className="font-medium text-xs">Inscription</Link>
+                  </Button>
+                </div>
+                
+                {/* Desktop location indicator */}
+                <div className="hidden sm:flex items-center space-x-2">
+                  <MapPin className="h-4 w-4 text-rose-500" />
+                  <span className="text-sm font-medium text-gray-600">Toulouse</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </header>
-
-      <main className="flex-grow">
-        {/* Hero Section with Modern Design */}
-        <section className="relative py-16 sm:py-24 lg:py-32 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-rose-50 via-purple-50 to-indigo-50"></div>
-          <div className="absolute inset-0 opacity-40" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f1f5f9' fill-opacity='0.4'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-          }}></div>
-          
-          <div className="relative container mx-auto px-4 text-center">
-            <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 mb-6 shadow-lg border border-white/50">
-              <Sparkles className="h-4 w-4 text-rose-500" />
+        </header>      <main className="flex-grow">
+        {/* Hero Section with Enhanced Modern Design */}
+        <section className="parallax-section relative py-16 sm:py-24 lg:py-32 overflow-hidden">
+          <div className="parallax-content container mx-auto px-4 text-center">
+            <div className="inline-flex items-center gap-2 glass-modern rounded-full px-6 py-3 mb-8 shadow-xl animate-float-enhanced">
+              <Sparkles className="h-5 w-5 text-rose-500" />
               <span className="text-sm font-medium text-gray-700">Nouvelle application communautaire</span>
             </div>
             
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold bg-gradient-to-r from-rose-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6 leading-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold bg-gradient-to-r from-rose-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6 leading-tight animate-fade-in">
               Cossí va ?
             </h1>
             
-            <p className="text-xl sm:text-2xl text-gray-600 mb-4 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl sm:text-2xl text-gray-700 mb-4 max-w-3xl mx-auto leading-relaxed font-medium">
               L'application des toulousains pour faire des sorties
             </p>
             
-            <p className="text-lg text-gray-500 mb-8 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-lg text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
               Accueil des nouveaux à Toulouse. Sorties, emploi, logement, covoiturage, petites annonces, tandem de langues, sorties entre filles, sorties étudiantes, évènements, idées de sorties, voyage, international.
             </p>
             
-            <div className="inline-flex items-center gap-2 text-lg font-semibold text-gray-800 mb-12">
-              <Star className="h-5 w-5 text-yellow-500 fill-current" />
+            <div className="inline-flex items-center gap-3 text-lg font-semibold text-gray-800 mb-12 glass-modern rounded-full px-8 py-4 shadow-xl">
+              <Star className="h-6 w-6 text-yellow-500 fill-current animate-pulse-slow" />
               <span>Rejoignez la communauté des toulousaines et toulousains ! C'est gratuit et sans limite !</span>
             </div>
             
             {/* Welcome Hosts Section */}
-            <div className="max-w-4xl mx-auto p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-rose-500/10 via-purple-500/10 to-indigo-500/10 backdrop-blur-sm border border-white/30 shadow-xl">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <div className="p-2 rounded-full bg-gradient-to-r from-rose-500 to-purple-600">
-                  <Handshake className="h-6 w-6 text-white"/>
+            <div className="max-w-4xl mx-auto p-8 sm:p-10 rounded-3xl glass-modern shadow-2xl border border-white/50">
+              <div className="flex items-center justify-center gap-4 mb-6">
+                <div className="p-3 rounded-full bg-gradient-to-r from-rose-500 to-purple-600 shadow-lg">
+                  <Handshake className="h-7 w-7 text-white"/>
                 </div>
                 <h3 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent">
                   Découvrez nos Accueillant(e)s
                 </h3>
               </div>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-gray-700 leading-relaxed text-lg">
                 Ils sont là pour te faire découvrir la ville, les visites, les évènements, la culture locale, les lieux pour sortir, ou pour faire du shopping ! Ils ont un badge sur leur profil, contacte-les !
               </p>
             </div>
           </div>
         </section>
 
-        {/* Image Carousel Section */}
-        <section className="py-12 sm:py-16 bg-white/50 backdrop-blur-sm">
-          <div className="container mx-auto px-4">
+        {/* Image Carousel Section with Modern Glassmorphism */}
+        <section className="parallax-section py-12 sm:py-16">
+          <div className="parallax-content container mx-auto px-4">
             <Carousel
               opts={{
                 align: "start",
@@ -281,7 +288,7 @@ export default function HomePage() {
                 {topCarouselImages.map((src, index) => (
                   <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
                     <div className="group cursor-pointer">
-                      <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform group-hover:scale-105 bg-white/80 backdrop-blur-sm">
+                      <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform group-hover:scale-105 glass-modern">
                         <CardContent className="p-0 relative aspect-square">
                           <Image 
                             src={src} 
@@ -290,15 +297,15 @@ export default function HomePage() {
                             height={600} 
                             className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110" 
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </CardContent>
                       </Card>
                     </div>
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="hidden sm:flex -left-12 bg-white/80 backdrop-blur-sm shadow-lg border-0 hover:bg-white" />
-              <CarouselNext className="hidden sm:flex -right-12 bg-white/80 backdrop-blur-sm shadow-lg border-0 hover:bg-white" />
+              <CarouselPrevious className="hidden sm:flex -left-12 glass-modern shadow-xl border-0 hover:bg-white/90" />
+              <CarouselNext className="hidden sm:flex -right-12 glass-modern shadow-xl border-0 hover:bg-white/90" />
             </Carousel>
           </div>
         </section>
@@ -570,6 +577,7 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
