@@ -17,7 +17,8 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 // Import data and types from other pages
-import { type Ad, adsData } from '@/app/(app)/ads/data';
+// Mock ads data since ads page uses API hooks
+const adsData: any[] = []; // Empty for now - could be replaced with API hook later
 import { type CarpoolAd, carpoolData } from '@/app/(app)/carpooling/data';
 import { type HousingAd, housingData } from '@/app/(app)/housing/data';
 import { type JobAd, jobData } from '@/app/(app)/jobs/data';
