@@ -55,6 +55,11 @@ class ApiClient {
     return response.data;
   }
 
+  public async patch<T>(url: string, data?: any): Promise<ApiResponse<T>> {
+    const response = await this.client.patch<ApiResponse<T>>(url, data);
+    return response.data;
+  }
+
   public async delete<T>(url: string): Promise<ApiResponse<T>> {
     const response = await this.client.delete<ApiResponse<T>>(url);
     return response.data;

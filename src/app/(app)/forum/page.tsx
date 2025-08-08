@@ -2,34 +2,104 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { forumCategories } from './data';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, MessageSquarePlus } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Search, MessageSquarePlus, MessageCircle, Clock, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 
+// Hooks and utilities
+import { useGetForumCategories, useGetForumThemes, useCreateForumMessage } from '@/hooks/useForum';
+import { 
+  formatLastActivity, 
+  formatMessageCount, 
+  getThemeEmoji, 
+  getCategoryColor,
+  generateForumUrl
+} from '@/lib/forum-utils';
+import { CreateForumMessageData } from '@/types';
+
 const newDiscussionSchema = z.object({
-  theme: z.string().min(1, 'Veuillez sélectionner un thème.'),
+  themeId: z.string().min(1, 'Veuillez sélectionner un thème.'),
   title: z.string().min(3, 'Le titre doit contenir au moins 3 caractères.'),
-  description: z.string().min(10, 'La description doit contenir au moins 10 caractères.'),
+  content: z.string().min(10, 'Le contenu doit contenir au moins 10 caractères.'),
 });
 
 type NewDiscussionFormData = z.infer<typeof newDiscussionSchema>;
+
+const ThemeCard = ({ theme }: { theme: any }) => {
+  return (
+    <Link href={`/app/forum/${theme.slug}`}>
+      <Card className="h-full hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 ease-in-out cursor-pointer group">
+        <div className="relative h-24 w-full bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+          <span className="text-4xl">{getThemeEmoji(theme)}</span>
+        </div>
+        <CardHeader>
+          <CardTitle className="text-base group-hover:text-primary line-clamp-2">
+            {theme.name}
+          </CardTitle>
+          {theme.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {theme.description}
+            </p>
+          )}
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <MessageCircle className="w-3 h-3" />
+              <span>{formatMessageCount(theme.messageCount)}</span>
+            </div>
+            {theme.lastActivity && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                <span>{formatLastActivity(theme.lastActivity)}</span>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+};
+
+const ThemeSkeleton = () => (
+  <Card className="h-full">
+    <div className="h-24 w-full">
+      <Skeleton className="h-full w-full rounded-t-lg" />
+    </div>
+    <CardHeader>
+      <Skeleton className="h-5 w-3/4" />
+      <Skeleton className="h-4 w-full" />
+    </CardHeader>
+    <CardContent>
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-12" />
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export default function ForumPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // Get forum data
+  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useGetForumCategories();
+  const { data: allThemes = [], isLoading: themesLoading } = useGetForumThemes();
+  const createMessageMutation = useCreateForumMessage();
   
   const { register, handleSubmit, control, formState: { errors }, reset } = useForm<NewDiscussionFormData>({
     resolver: zodResolver(newDiscussionSchema),
@@ -40,22 +110,22 @@ export default function ForumPage() {
       if (hasSearched) {
         return [];
       }
-      return forumCategories;
+      return categories;
     }
 
     const lowercasedTerm = searchTerm.toLowerCase();
-    return forumCategories.map(category => {
+    return categories.map(category => {
       const filteredThemes = category.themes.filter(theme =>
-        theme.name.toLowerCase().includes(lowercasedTerm)
+        theme.name.toLowerCase().includes(lowercasedTerm) ||
+        theme.description?.toLowerCase().includes(lowercasedTerm)
       );
       return { ...category, themes: filteredThemes };
     }).filter(category => category.themes.length > 0);
-  }, [searchTerm, hasSearched]);
+  }, [searchTerm, hasSearched, categories]);
   
   const totalResults = useMemo(() => {
     return filteredCategories.reduce((acc, category) => acc + category.themes.length, 0);
   }, [filteredCategories]);
-
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
@@ -63,23 +133,44 @@ export default function ForumPage() {
     setHasSearched(term.length > 0);
   };
 
-  const onSubmit = (data: NewDiscussionFormData) => {
-    console.log('New Discussion Data:', data);
-    toast({
+  const onSubmit = async (data: NewDiscussionFormData) => {
+    try {
+      const messageData: CreateForumMessageData = {
+        title: data.title,
+        content: data.content,
+        themeId: data.themeId
+      };
+
+      await createMessageMutation.mutateAsync(messageData);
+      
+      toast({
         title: "òsca !",
-        description: "message envoyé",
+        description: "Message publié avec succès",
         variant: "default"
-    });
-    reset();
-    setIsDialogOpen(false);
+      });
+      reset();
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de publier le message. Veuillez réessayer.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const allThemesForSelect = useMemo(() => {
-    return forumCategories.flatMap(category => category.themes.map(theme => ({
-        value: theme.slug,
-        label: theme.name
-    })));
-  }, []);
+  if (categoriesError) {
+    return (
+      <div className="container mx-auto p-4 md:p-8">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <h2 className="text-xl font-semibold text-destructive mb-2">Erreur de chargement</h2>
+            <p className="text-muted-foreground">Impossible de charger le forum.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -115,24 +206,26 @@ export default function ForumPage() {
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="theme">Thème</Label>
+                <Label htmlFor="themeId">Thème</Label>
                 <Controller
-                  name="theme"
+                  name="themeId"
                   control={control}
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger id="theme">
+                        <SelectTrigger id="themeId">
                             <SelectValue placeholder="Sélectionnez un thème" />
                         </SelectTrigger>
                         <SelectContent>
-                            {allThemesForSelect.map(theme => (
-                                <SelectItem key={theme.value} value={theme.value}>{theme.label}</SelectItem>
+                            {allThemes.map(theme => (
+                                <SelectItem key={theme.id} value={theme.id}>
+                                  {getThemeEmoji(theme)} {theme.name}
+                                </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                   )}
                 />
-                {errors.theme && <p className="text-sm text-destructive">{errors.theme.message}</p>}
+                {errors.themeId && <p className="text-sm text-destructive">{errors.themeId.message}</p>}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="title">Titre du message</Label>
@@ -140,13 +233,17 @@ export default function ForumPage() {
                 {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="description">Description du message</Label>
-                <Textarea id="description" {...register('description')} />
-                {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
+                <Label htmlFor="content">Contenu du message</Label>
+                <Textarea id="content" {...register('content')} />
+                {errors.content && <p className="text-sm text-destructive">{errors.content.message}</p>}
               </div>
               <DialogFooter>
-                <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>Annuler</Button>
-                <Button type="submit">Publier</Button>
+                <Button type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={createMessageMutation.isPending}>
+                  {createMessageMutation.isPending ? 'Publication...' : 'Publier'}
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -169,32 +266,47 @@ export default function ForumPage() {
             </div>
         )}
 
-      {filteredCategories.map((category) => (
-        <div key={category.name} className="mb-10">
-          <h2 className="text-2xl font-bold font-headline mb-4">{category.name}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {category.themes.map((theme) => (
-              <Link href={`/forum/${theme.slug}`} key={theme.name}>
-                <Card className="h-full hover:shadow-lg hover:-translate-y-1 transition-transform duration-300 ease-in-out cursor-pointer group">
-                  <div className="relative h-40 w-full">
-                    <Image
-                      src={theme.image}
-                      alt={theme.name}
-                      layout="fill"
-                      objectFit="cover"
-                      data-ai-hint={theme.dataAiHint}
-                      className="rounded-t-lg"
-                    />
-                  </div>
-                  <CardHeader>
-                    <CardTitle className="text-base group-hover:text-primary">{theme.name}</CardTitle>
-                  </CardHeader>
-                </Card>
-              </Link>
-            ))}
-          </div>
+      {categoriesLoading || themesLoading ? (
+        <div className="space-y-10">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="mb-10">
+              <Skeleton className="h-8 w-48 mb-4" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array.from({ length: 4 }).map((_, j) => (
+                  <ThemeSkeleton key={j} />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      ) : (
+        filteredCategories.map((category) => (
+          <div key={category.id} className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-2xl font-bold font-headline">{category.name}</h2>
+              <Badge variant={getCategoryColor(category.id) as any}>
+                {category.themes.length} thème{category.themes.length > 1 ? 's' : ''}
+              </Badge>
+            </div>
+            {category.description && (
+              <p className="text-muted-foreground mb-4">{category.description}</p>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {category.themes.map((theme) => (
+                <ThemeCard key={theme.id} theme={theme} />
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+      
+      {!categoriesLoading && !themesLoading && filteredCategories.length === 0 && !hasSearched && (
+        <div className="text-center text-muted-foreground py-10">
+          <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <p className="text-lg mb-2">Aucun thème disponible</p>
+          <p className="text-sm">Le forum est en cours de configuration</p>
+        </div>
+      )}
     </div>
   );
 }

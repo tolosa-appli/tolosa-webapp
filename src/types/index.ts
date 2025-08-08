@@ -31,8 +31,12 @@ export interface CarouselImage {
 export interface User {
   id: string;
   name: string;
+  email?: string;
   avatar: string;
   role?: 'user' | 'moderator' | 'admin';
+  verified?: boolean;
+  joinedAt?: string;
+  isActive?: boolean;
 }
 
 export interface Ad {
@@ -84,6 +88,114 @@ export interface AdsFilters {
 export interface AdsSortOptions {
   field: 'createdAt' | 'price' | 'title' | 'location';
   direction: 'asc' | 'desc';
+}
+
+export interface CarpoolAd {
+  id: string;
+  type: 'offer' | 'request';
+  tripType: 'regular' | 'outing';
+  from: string;
+  to: string;
+  date: string;
+  userId: string;
+  user: User;
+  contactInfo?: {
+    phone?: string;
+    email?: string;
+    preferredContact: 'phone' | 'email' | 'message';
+  };
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCarpoolData {
+  type: CarpoolAd['type'];
+  tripType: CarpoolAd['tripType'];
+  from: string;
+  to: string;
+  date: string;
+  contactInfo?: CarpoolAd['contactInfo'];
+}
+
+export interface FacebookGroup {
+  id: string;
+  name: string;
+  description?: string;
+  url: string;
+  category: 'general' | 'events' | 'housing' | 'culture' | 'women' | 'professional';
+  isActive: boolean;
+  order: number;
+}
+
+export interface ForumTheme {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image: string;
+  categoryId: string;
+  isActive: boolean;
+  order: number;
+  messageCount: number;
+  lastActivity?: string;
+}
+
+export interface ForumCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  isActive: boolean;
+  order: number;
+  themes: ForumTheme[];
+}
+
+export interface ForumMessage {
+  id: string;
+  title: string;
+  content: string;
+  themeId: string;
+  theme?: ForumTheme;
+  userId: string;
+  user: User;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  replyCount: number;
+}
+
+export interface CreateForumMessageData {
+  title: string;
+  content: string;
+  themeId: string;
+}
+
+export interface GirlsEvent {
+  id: string;
+  title: string;
+  description: string;
+  theme: string;
+  date: string;
+  location: string;
+  maxParticipants?: number;
+  currentParticipants: number;
+  images: string[];
+  organizerId: string;
+  organizer: User;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateGirlsEventData {
+  title: string;
+  description: string;
+  theme: string;
+  date: string;
+  location: string;
+  maxParticipants?: number;
+  images?: string[];
 }
 
 // API Response types

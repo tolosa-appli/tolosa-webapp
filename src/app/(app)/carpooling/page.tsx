@@ -5,9 +5,9 @@ import { useState, useMemo, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { CalendarIcon, Search, Car, User, Clock } from 'lucide-react';
+import { CalendarIcon, Search, Car, User, Clock, Phone, Mail, MessageCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -18,9 +18,23 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
-import { carpoolData } from './data';
+
+// Hooks and utilities
+import { useGetCarpools, useCreateCarpool } from '@/hooks/useCarpools';
+import { 
+  formatCarpoolDate, 
+  getCarpoolTypeLabel, 
+  getTripTypeLabel, 
+  formatCarpoolRoute,
+  getCarpoolStatus,
+  getContactPreferenceLabel,
+  formatContactInfo
+} from '@/lib/carpool-utils';
+import { CreateCarpoolData } from '@/types';
 
 // Schema for the form
 const carpoolSchema = z.object({
@@ -28,23 +42,55 @@ const carpoolSchema = z.object({
   from: z.string().min(3, 'Le lieu de départ doit contenir au moins 3 caractères.'),
   to: z.string().min(3, 'Le lieu d\'arrivée doit contenir au moins 3 caractères.'),
   date: z.date({ required_error: 'Veuillez sélectionner une date.' }),
+  contactPhone: z.string().optional(),
+  contactEmail: z.string().email('Email invalide').optional(),
+  preferredContact: z.enum(['phone', 'email', 'message']).default('message'),
 });
 
 type CarpoolFormData = z.infer<typeof carpoolSchema>;
 
 const CarpoolForm = ({ type }: { type: 'offer' | 'request' }) => {
     const { toast } = useToast();
-    const { register, handleSubmit, control, formState: { errors }, reset } = useForm<CarpoolFormData>({
+    const createCarpoolMutation = useCreateCarpool();
+    
+    const { register, handleSubmit, control, formState: { errors }, reset, watch } = useForm<CarpoolFormData>({
         resolver: zodResolver(carpoolSchema),
+        defaultValues: {
+            preferredContact: 'message'
+        }
     });
 
-    const onSubmit = (data: CarpoolFormData) => {
-        console.log(`New ${type} submitted:`, data);
-        toast({
-            title: "òsca !",
-            description: "Annonce publiée avec succès.",
-        });
-        reset();
+    const preferredContact = watch('preferredContact');
+
+    const onSubmit = async (data: CarpoolFormData) => {
+        try {
+            const carpoolData: CreateCarpoolData = {
+                type,
+                tripType: data.tripType,
+                from: data.from,
+                to: data.to,
+                date: data.date.toISOString(),
+                contactInfo: data.preferredContact !== 'message' ? {
+                    phone: data.contactPhone,
+                    email: data.contactEmail,
+                    preferredContact: data.preferredContact
+                } : undefined
+            };
+
+            await createCarpoolMutation.mutateAsync(carpoolData);
+            
+            toast({
+                title: "òsca !",
+                description: "Annonce publiée avec succès.",
+            });
+            reset();
+        } catch (error) {
+            toast({
+                title: "Erreur",
+                description: "Impossible de publier l'annonce. Veuillez réessayer.",
+                variant: "destructive"
+            });
+        }
     };
 
     return (
@@ -69,6 +115,7 @@ const CarpoolForm = ({ type }: { type: 'offer' | 'request' }) => {
                 />
                 {errors.tripType && <p className="text-sm text-destructive">{errors.tripType.message}</p>}
             </div>
+            
             <div className="grid md:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                     <Label htmlFor={`from-${type}`}>Départ</Label>
@@ -81,9 +128,10 @@ const CarpoolForm = ({ type }: { type: 'offer' | 'request' }) => {
                     {errors.to && <p className="text-sm text-destructive">{errors.to.message}</p>}
                 </div>
             </div>
+            
             <div className="grid gap-2">
                 <Label>Quand ?</Label>
-                 <Controller
+                <Controller
                     name="date"
                     control={control}
                     render={({ field }) => (
@@ -107,6 +155,7 @@ const CarpoolForm = ({ type }: { type: 'offer' | 'request' }) => {
                                     onSelect={field.onChange}
                                     initialFocus
                                     locale={fr}
+                                    disabled={(date) => date < new Date()}
                                 />
                             </PopoverContent>
                         </Popover>
@@ -114,23 +163,161 @@ const CarpoolForm = ({ type }: { type: 'offer' | 'request' }) => {
                 />
                 {errors.date && <p className="text-sm text-destructive">{errors.date.message}</p>}
             </div>
-            <Button type="submit" className="w-full">
-                {type === 'offer' ? 'Proposer ce trajet' : 'Chercher ce trajet'}
+
+            <div className="grid gap-2">
+                <Label>Comment vous contacter ?</Label>
+                <Controller
+                    name="preferredContact"
+                    control={control}
+                    render={({ field }) => (
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="message" id={`contact-message-${type}`} />
+                                <Label htmlFor={`contact-message-${type}`}>Via messages privés</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="phone" id={`contact-phone-${type}`} />
+                                <Label htmlFor={`contact-phone-${type}`}>Par téléphone</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="email" id={`contact-email-${type}`} />
+                                <Label htmlFor={`contact-email-${type}`}>Par email</Label>
+                            </div>
+                        </RadioGroup>
+                    )}
+                />
+            </div>
+
+            {preferredContact === 'phone' && (
+                <div className="grid gap-2">
+                    <Label htmlFor={`phone-${type}`}>Numéro de téléphone</Label>
+                    <Input id={`phone-${type}`} placeholder="06 12 34 56 78" {...register('contactPhone')} />
+                    {errors.contactPhone && <p className="text-sm text-destructive">{errors.contactPhone.message}</p>}
+                </div>
+            )}
+
+            {preferredContact === 'email' && (
+                <div className="grid gap-2">
+                    <Label htmlFor={`email-${type}`}>Adresse email</Label>
+                    <Input id={`email-${type}`} type="email" placeholder="exemple@email.com" {...register('contactEmail')} />
+                    {errors.contactEmail && <p className="text-sm text-destructive">{errors.contactEmail.message}</p>}
+                </div>
+            )}
+            
+            <Button type="submit" className="w-full" disabled={createCarpoolMutation.isPending}>
+                {createCarpoolMutation.isPending ? 'Publication...' : 
+                 type === 'offer' ? 'Proposer ce trajet' : 'Chercher ce trajet'}
             </Button>
         </form>
     );
 };
 
+const CarpoolCard = ({ carpool }: { carpool: any }) => {
+    const status = getCarpoolStatus(carpool);
+    
+    const getContactIcon = () => {
+        if (!carpool.contactInfo) return <MessageCircle className="w-4 h-4" />;
+        
+        switch (carpool.contactInfo.preferredContact) {
+            case 'phone': return <Phone className="w-4 h-4" />;
+            case 'email': return <Mail className="w-4 h-4" />;
+            default: return <MessageCircle className="w-4 h-4" />;
+        }
+    };
+
+    return (
+        <Card className={cn("flex flex-col sm:flex-row", status === 'expired' && "opacity-60")}>
+            <div className="p-4 flex items-center justify-center sm:border-r">
+                <Avatar className="h-16 w-16">
+                    <AvatarImage src={carpool.user.avatar} alt={carpool.user.name} />
+                    <AvatarFallback>{carpool.user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+            </div>
+            <div className="flex-grow">
+                <CardHeader>
+                    <CardTitle className="flex justify-between items-start">
+                        <span className="text-lg">{formatCarpoolRoute(carpool.from, carpool.to)}</span>
+                        <div className="flex flex-col items-end gap-1">
+                            <Badge variant={carpool.type === 'offer' ? 'default' : 'secondary'}>
+                                {getCarpoolTypeLabel(carpool.type)}
+                            </Badge>
+                            {status === 'expired' && (
+                                <Badge variant="outline" className="text-xs">
+                                    Expiré
+                                </Badge>
+                            )}
+                        </div>
+                    </CardTitle>
+                    <CardDescription className="flex items-center gap-1 text-sm">
+                        <User className="h-4 w-4" /> {carpool.user.name}
+                        {carpool.user.verified && (
+                            <Badge variant="outline" className="text-xs ml-2">Vérifié</Badge>
+                        )}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center text-sm text-muted-foreground mb-2">
+                        <Car className="w-4 h-4 mr-2" />
+                        <span>Trajet {getTripTypeLabel(carpool.tripType).toLowerCase()}</span>
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground mb-2">
+                        <CalendarIcon className="w-4 h-4 mr-2" />
+                        <span>{formatCarpoolDate(carpool.date)}</span>
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                        {getContactIcon()}
+                        <span className="ml-2">{formatContactInfo(carpool)}</span>
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <div className="flex items-center text-xs text-muted-foreground">
+                        <Clock className="w-3 h-3 mr-1" />
+                        <span>Publié {formatCarpoolDate(carpool.createdAt)}</span>
+                    </div>
+                </CardFooter>
+            </div>
+            <div className="p-4 flex items-center justify-center border-t sm:border-t-0 sm:border-l">
+                <Button disabled={status === 'expired'}>
+                    Contacter
+                </Button>
+            </div>
+        </Card>
+    );
+};
+
+const CarpoolSkeleton = () => (
+    <Card className="flex flex-col sm:flex-row">
+        <div className="p-4 flex items-center justify-center sm:border-r">
+            <Skeleton className="h-16 w-16 rounded-full" />
+        </div>
+        <div className="flex-grow">
+            <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent>
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-2/3 mb-2" />
+                <Skeleton className="h-4 w-1/2" />
+            </CardContent>
+        </div>
+        <div className="p-4 flex items-center justify-center border-t sm:border-t-0 sm:border-l">
+            <Skeleton className="h-10 w-20" />
+        </div>
+    </Card>
+);
 
 export default function CarpoolingPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [searchDate, setSearchDate] = useState<Date | undefined>();
     const [hasSearched, setHasSearched] = useState(false);
-    const [isClient, setIsClient] = useState(false);
 
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
+    // Get carpools data
+    const { 
+        data: carpools = [], 
+        isLoading, 
+        error 
+    } = useGetCarpools();
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const term = e.target.value;
@@ -149,12 +336,12 @@ export default function CarpoolingPage() {
         } else if (hasSearched && !date && searchTerm.length === 0) {
             setHasSearched(false);
         }
-    }
+    };
 
     const filteredAds = useMemo(() => {
-        if (!hasSearched) return carpoolData;
+        if (!hasSearched) return carpools;
 
-        let ads = [...carpoolData];
+        let ads = [...carpools];
 
         if (searchTerm.length >= 3) {
             const lowercasedTerm = searchTerm.toLowerCase();
@@ -166,7 +353,11 @@ export default function CarpoolingPage() {
         }
         
         if (searchDate) {
-            ads = ads.filter(ad => format(new Date(ad.date), 'yyyy-MM-dd') === format(searchDate, 'yyyy-MM-dd'));
+            const searchDateStr = format(searchDate, 'yyyy-MM-dd');
+            ads = ads.filter(ad => {
+                const adDateStr = format(new Date(ad.date), 'yyyy-MM-dd');
+                return adDateStr === searchDateStr;
+            });
         }
         
         if (searchTerm.length > 0 && searchTerm.length < 3 && !searchDate) {
@@ -174,7 +365,7 @@ export default function CarpoolingPage() {
         }
 
         return ads;
-    }, [searchTerm, searchDate, hasSearched]);
+    }, [searchTerm, searchDate, hasSearched, carpools]);
 
     const renderSearchResultMessage = () => {
         if (!hasSearched) return null;
@@ -201,8 +392,21 @@ export default function CarpoolingPage() {
             );
         }
     };
+
+    if (error) {
+        return (
+            <div className="container mx-auto p-4 md:p-8">
+                <Card>
+                    <CardContent className="p-8 text-center">
+                        <h2 className="text-xl font-semibold text-destructive mb-2">Erreur de chargement</h2>
+                        <p className="text-muted-foreground">Impossible de charger les annonces de covoiturage.</p>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
     
-    const adsToDisplay = hasSearched ? filteredAds : carpoolData;
+    const adsToDisplay = hasSearched ? filteredAds : carpools;
 
     return (
         <div className="container mx-auto p-4 md:p-8">
@@ -284,53 +488,20 @@ export default function CarpoolingPage() {
                          {renderSearchResultMessage()}
 
                         <div className="space-y-4">
-                            {adsToDisplay.map(ad => (
-                                <Card key={ad.id} className="flex flex-col sm:flex-row">
-                                    <div className="p-4 flex items-center justify-center sm:border-r">
-                                         <Avatar className="h-16 w-16">
-                                            <AvatarImage src={ad.user.avatar} alt={ad.user.name} data-ai-hint={ad.user.dataAiHint} />
-                                            <AvatarFallback>{ad.user.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                    </div>
-                                    <div className="flex-grow">
-                                        <CardHeader>
-                                            <CardTitle className="flex justify-between items-center">
-                                                <span>{ad.from} → {ad.to}</span>
-                                                <span className={`text-sm font-medium ${ad.type === 'offer' ? 'text-green-600' : 'text-blue-600'}`}>
-                                                    {ad.type === 'offer' ? 'Propose' : 'Recherche'}
-                                                </span>
-                                            </CardTitle>
-                                            <CardDescription className="flex items-center gap-1 text-sm">
-                                                <User className="h-4 w-4" /> {ad.user.name}
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="flex items-center text-sm text-muted-foreground mb-2">
-                                                <Car className="w-4 h-4 mr-2" />
-                                                <span>Trajet {ad.tripType === 'regular' ? 'régulier' : 'pour sortie'}</span>
-                                            </div>
-                                            <div className="flex items-center text-sm text-muted-foreground">
-                                                <CalendarIcon className="w-4 h-4 mr-2" />
-                                                <span>{isClient ? format(new Date(ad.date), "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr }) : '...'}</span>
-                                            </div>
-                                        </CardContent>
-                                        <CardFooter>
-                                             <div className="flex items-center text-xs text-muted-foreground">
-                                                <Clock className="w-3 h-3 mr-1" />
-                                                <span>Publié {isClient ? formatDistanceToNow(new Date(ad.postedAt), { addSuffix: true, locale: fr }) : '...'}</span>
-                                            </div>
-                                        </CardFooter>
-                                    </div>
-                                    <div className="p-4 flex items-center justify-center border-t sm:border-t-0 sm:border-l">
-                                         <Button>Contacter</Button>
-                                    </div>
-                                </Card>
-                            ))}
-                            {adsToDisplay.length === 0 && !hasSearched && (
+                            {isLoading ? (
+                                // Loading skeletons
+                                Array.from({ length: 3 }).map((_, i) => (
+                                    <CarpoolSkeleton key={i} />
+                                ))
+                            ) : adsToDisplay.length > 0 ? (
+                                adsToDisplay.map(carpool => (
+                                    <CarpoolCard key={carpool.id} carpool={carpool} />
+                                ))
+                            ) : !hasSearched ? (
                                 <div className="text-center text-muted-foreground py-10">
                                     <p>Aucune annonce de covoiturage pour le moment.</p>
                                 </div>
-                            )}
+                            ) : null}
                         </div>
                     </div>
                 </CardContent>
