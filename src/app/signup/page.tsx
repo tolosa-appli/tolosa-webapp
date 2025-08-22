@@ -61,6 +61,7 @@ export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { register: registerUser } = useAuth();
+  const signupEnabled = (process.env.NEXT_PUBLIC_SIGNUP_ENABLED ?? 'true').toLowerCase() !== 'false';
   const [formError, setFormError] = useState('');
   const [captchaNum1, setCaptchaNum1] = useState(0);
   const [captchaNum2, setCaptchaNum2] = useState(0);
@@ -128,6 +129,25 @@ export default function SignupPage() {
   const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 100 }, (_, i) => (currentYear - 18 - i).toString());
+
+  if (!signupEnabled) {
+    return (
+      <div className="flex items-center justify-center min-h-screen py-12 bg-gradient-to-br from-background to-card">
+        <Card className="mx-auto max-w-md w-full shadow-2xl">
+          <CardHeader className="text-center">
+            <div className="inline-block mx-auto"><Logo /></div>
+            <CardTitle className="text-2xl font-headline">Inscriptions désactivées</CardTitle>
+            <CardDescription>Merci de revenir plus tard.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/">Retour à l'accueil</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen py-12 bg-gradient-to-br from-background to-card">

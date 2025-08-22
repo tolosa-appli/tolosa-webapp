@@ -60,9 +60,12 @@ import {
   MessageSquareText,
   Gamepad2,
 } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import GoogleTranslate from '@/components/google-translate';
+import { useEffect } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import FullscreenLoader from '@/components/fullscreen-loader';
 
 const topItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord' },
@@ -102,6 +105,18 @@ const communautesItems = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login');
+    }
+  }, [loading, user, router]);
+
+  if (loading || !user) {
+    return <FullscreenLoader label="Vérification de votre session..." />;
+  }
   // --- Simulation de l'utilisateur connecté ---
   // Dans une application réelle, ces données proviendraient de votre système d'authentification.
   const currentUser = {
@@ -208,8 +223,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <div className="pt-12 sm:pt-0">
-             <GoogleTranslate />
+        <div className="pt-0">
             <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:py-3">
                 <div className="flex items-center gap-4">
                     <SidebarTrigger className="sm:hidden"/>
@@ -223,6 +237,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    {/* Language selector inside navbar */}
+                    <div className="hidden sm:block">
+                      <GoogleTranslate />
+                    </div>
                     <Button variant="ghost" size="icon" asChild>
                         <Link href="/messages" className="relative">
                             <Mail />

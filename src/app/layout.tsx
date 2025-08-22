@@ -23,22 +23,12 @@ export default function RootLayout({
         <style>
           {`
             body {
-              padding-top: 40px; /* Default padding */
+              padding-top: 0; /* No extra gap above navbar */
+              margin: 0;
             }
             .goog-te-banner-frame {
               display: none !important;
             }
-            @media (max-width: 640px) {
-               body {
-                   padding-top: 80px; /* Padding for mobile view to clear translate bar */
-               }
-            }
-             #google_translate_element {
-               position: fixed;
-               top: 4px;
-               right: 4px;
-               z-index: 1000;
-             }
           `}
         </style>
       </head>

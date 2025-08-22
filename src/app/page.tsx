@@ -49,7 +49,6 @@ export default function HomePage() {
 
       {/* Content */}
       <div className="relative z-10">
-        <GoogleTranslate />
       
         {/* Modern Header with Enhanced Glassmorphism */}
         <header className="sticky top-0 z-50 glass-modern border-b border-white/30 shadow-lg">
@@ -68,10 +67,14 @@ export default function HomePage() {
                 <Logo />
               </div>
               
-              {/* Right side: Location indicator (desktop) or buttons (mobile) */}
+              {/* Right side: Language + Location (desktop) or buttons (mobile) */}
               <div className="flex items-center space-x-2">
                 {/* Mobile buttons */}
                 <AuthMobileControls />
+                {/* Desktop language selector inside navbar */}
+                <div className="hidden sm:block">
+                  <GoogleTranslate />
+                </div>
                 
                 {/* Desktop location indicator */}
                 <div className="hidden sm:flex items-center space-x-2">
