@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { AuthDesktopControls, AuthMobileControls } from '@/components/auth-session-controls';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ArrowRight,
@@ -60,14 +61,7 @@ export default function HomePage() {
               </div>
               
               {/* Desktop Layout: Buttons on left, logo centered, location on right */}
-              <div className="hidden md:flex items-center space-x-3 sm:space-x-4">
-                <Button asChild variant="destructive" className="rounded-full px-4 lg:px-6 py-2 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                  <Link href="/login" className="font-medium text-sm lg:text-base">Connexion</Link>
-                </Button>
-                <Button asChild className="rounded-full px-4 lg:px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                  <Link href="/signup" className="font-medium text-sm lg:text-base">Inscription</Link>
-                </Button>
-              </div>
+              <AuthDesktopControls />
               
               {/* Desktop: Centered Logo */}
               <div className="hidden md:block absolute left-1/2 transform -translate-x-1/2">
@@ -77,14 +71,7 @@ export default function HomePage() {
               {/* Right side: Location indicator (desktop) or buttons (mobile) */}
               <div className="flex items-center space-x-2">
                 {/* Mobile buttons */}
-                <div className="flex md:hidden items-center space-x-2">
-                  <Button asChild variant="destructive" className="rounded-full px-3 py-1.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                    <Link href="/login" className="font-medium text-xs">Connexion</Link>
-                  </Button>
-                  <Button asChild className="rounded-full px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                    <Link href="/signup" className="font-medium text-xs">Inscription</Link>
-                  </Button>
-                </div>
+                <AuthMobileControls />
                 
                 {/* Desktop location indicator */}
                 <div className="hidden sm:flex items-center space-x-2">

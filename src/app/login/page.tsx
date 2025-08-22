@@ -13,6 +13,7 @@ import { AlertCircle, Chrome, Facebook, Linkedin, Twitter } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Logo } from '@/components/logo';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/hooks/use-auth';
 
 const AppleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -40,28 +41,26 @@ const SpotifyIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [error, setError] = useState('');
   const [attempts, setAttempts] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    // This is a mock login flow
     const formData = new FormData(e.target as HTMLFormElement);
-    const identifier = formData.get('identifier');
-    const password = formData.get('password');
-
-    if (identifier === 'user' && password === 'password') {
-      router.push('/dashboard');
+    const identifier = String(formData.get('identifier') || '');
+    const password = String(formData.get('password') || '');
+    setSubmitting(true);
+    const result = await login(identifier, password);
+    setSubmitting(false);
+    if (result.ok) {
+      router.push('/');
     } else {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
-      if (newAttempts >= 3) {
-        setError('Boudu ! ça ne marche pas, est-ce possible de débloquer mon compte ?');
-      } else {
-        setError('Milodioùs, tu as tapé un mauvais identifiant ou mot de passe !');
-      }
+      setError(result.error || 'Erreur de connexion');
     }
   };
 
@@ -97,8 +96,8 @@ export default function LoginPage() {
               </div>
               <Input id="password" name="password" type="password" required disabled={attempts >= 3}/>
             </div>
-            <Button type="submit" className="w-full" variant="destructive" disabled={attempts >= 3}>
-              Se connecter
+            <Button type="submit" className="w-full" variant="destructive" disabled={attempts >= 3 || submitting}>
+              {submitting ? 'Connexion...' : 'Se connecter'}
             </Button>
           </form>
 

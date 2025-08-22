@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import ReactQueryProvider from '@/providers/react-query-provider';
+import { AuthProvider } from '@/providers/auth-provider';
 
 export const metadata: Metadata = {
   title: 'Tolosa Amical',
@@ -43,7 +44,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <ReactQueryProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ReactQueryProvider>
         <Toaster />
       </body>

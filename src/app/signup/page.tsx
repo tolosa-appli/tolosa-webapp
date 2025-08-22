@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Logo } from '@/components/logo';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks/use-auth';
 
 const eighteenYearsAgo = new Date();
 eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
@@ -59,6 +60,7 @@ type FormData = z.infer<typeof formSchema>;
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { register: registerUser } = useAuth();
   const [formError, setFormError] = useState('');
   const [captchaNum1, setCaptchaNum1] = useState(0);
   const [captchaNum2, setCaptchaNum2] = useState(0);
@@ -82,7 +84,7 @@ export default function SignupPage() {
     },
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     setFormError('');
 
     if (parseInt(data.captcha, 10) !== captchaNum1 + captchaNum2) {
@@ -99,16 +101,27 @@ export default function SignupPage() {
       return;
     }
     
-    console.log(data);
-    
+    // Build payload for API (strip confirmPassword and captcha)
+    const { confirmPassword, captcha, dob_day, dob_month, dob_year, ...rest } = data as any;
+    const payload = {
+      ...rest,
+      dob: `${dob_year}-${dob_month.padStart(2,'0')}-${dob_day.padStart(2,'0')}`,
+    };
+
+    const result = await registerUser(payload);
+    if (!result.ok) {
+      setFormError(result.error || 'Création du compte échouée');
+      return;
+    }
+
     toast({
       title: "Compte créé !",
       description: "Merci, ton compte a bien été créé. Vous allez être redirigé.",
     });
-    
+
     setTimeout(() => {
       router.push('/login');
-    }, 2000);
+    }, 1500);
   };
 
   const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
