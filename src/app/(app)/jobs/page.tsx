@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { jobData } from './data';
+import { useGetJobs, type JobAd } from '@/hooks/useJobs';
 
 // Schemas for forms
 const offerSchema = z.object({
@@ -261,18 +261,20 @@ export default function JobsPage() {
         }
     };
 
+    const { data: jobs = [], isLoading, error } = useGetJobs();
+
     const filteredAds = useMemo(() => {
-        if (!hasSearched) return jobData;
+        if (!hasSearched) return jobs;
         if (searchTerm.length < 3) return [];
 
         const lowercasedTerm = searchTerm.toLowerCase();
-        return jobData.filter(ad =>
+        return jobs.filter(ad =>
             ad.title.toLowerCase().includes(lowercasedTerm) ||
             (ad.company && ad.company.toLowerCase().includes(lowercasedTerm)) ||
             ad.city.toLowerCase().includes(lowercasedTerm) ||
             ad.user.name.toLowerCase().includes(lowercasedTerm)
         );
-    }, [searchTerm, hasSearched]);
+    }, [searchTerm, hasSearched, jobs]);
 
     const renderSearchResultMessage = () => {
         if (!hasSearched) return null;
@@ -298,7 +300,7 @@ export default function JobsPage() {
         }
     };
     
-    const adsToDisplay = hasSearched ? filteredAds : jobData;
+    const adsToDisplay = hasSearched ? filteredAds : jobs;
     
     return (
         <div className="container mx-auto p-4 md:p-8">
@@ -355,7 +357,13 @@ export default function JobsPage() {
                          {renderSearchResultMessage()}
 
                         <div className="grid md:grid-cols-2 gap-6">
-                            {adsToDisplay.map(ad => (
+                            {isLoading && (
+                                <div className="col-span-full text-center text-muted-foreground py-10">Chargement...</div>
+                            )}
+                            {error && (
+                                <div className="col-span-full text-center text-destructive py-10">Erreur de chargement</div>
+                            )}
+                            {adsToDisplay.map((ad: JobAd) => (
                                 <Card key={ad.id} className="overflow-hidden flex flex-col">
                                     <CardHeader className="flex flex-row justify-between items-start">
                                         <div>
@@ -397,7 +405,7 @@ export default function JobsPage() {
                                     </CardFooter>
                                 </Card>
                             ))}
-                            {adsToDisplay.length === 0 && !hasSearched && (
+                            {adsToDisplay.length === 0 && !hasSearched && !isLoading && !error && (
                                 <div className="col-span-full text-center text-muted-foreground py-10">
                                     <p>Aucune annonce d'emploi pour le moment.</p>
                                 </div>

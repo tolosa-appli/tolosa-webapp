@@ -13,6 +13,20 @@ import {
   Languages,
   ExternalLink,
   ThumbsUp,
+  MessageCircle,
+  Calendar,
+  MapPin,
+  Search,
+  Star,
+  BookOpen,
+  Coffee,
+  Music,
+  Camera,
+  Share2,
+  Gamepad2,
+  MessageSquareText,
+  UserPlus,
+  Globe,
   LucideIcon,
 } from 'lucide-react';
 
@@ -31,6 +45,21 @@ const iconMap: Record<string, LucideIcon> = {
   Languages,
   ExternalLink,
   ThumbsUp,
+  // Additional common icons
+  MessageCircle,
+  Calendar,
+  MapPin,
+  Search,
+  Star,
+  BookOpen,
+  Coffee,
+  Music,
+  Camera,
+  Share2,
+  Gamepad2,
+  MessageSquareText,
+  UserPlus,
+  Globe,
 };
 
 export const getIconComponent = (iconName: string): LucideIcon => {

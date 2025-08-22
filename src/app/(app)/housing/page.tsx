@@ -20,7 +20,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { housingData } from './data';
+import { useGetHousing, type HousingAd } from '@/hooks/useHousing';
 
 // Schema for the form
 const housingSchema = z.object({
@@ -170,18 +170,18 @@ export default function HousingPage() {
         }
     };
 
+    const { data: housing = [], isLoading, error } = useGetHousing();
+
     const filteredAds = useMemo(() => {
-        if (!hasSearched) return housingData;
-
+        if (!hasSearched) return housing;
         if (searchTerm.length < 3) return [];
-
         const lowercasedTerm = searchTerm.toLowerCase();
-        return housingData.filter(ad =>
+        return housing.filter(ad =>
             ad.address.toLowerCase().includes(lowercasedTerm) ||
             ad.city.toLowerCase().includes(lowercasedTerm) ||
             ad.user.name.toLowerCase().includes(lowercasedTerm)
         );
-    }, [searchTerm, hasSearched]);
+    }, [searchTerm, hasSearched, housing]);
 
     const renderSearchResultMessage = () => {
         if (!hasSearched) return null;
@@ -209,7 +209,7 @@ export default function HousingPage() {
         }
     };
     
-    const adsToDisplay = hasSearched ? filteredAds : housingData;
+    const adsToDisplay = hasSearched ? filteredAds : housing;
 
     return (
         <div className="container mx-auto p-4 md:p-8">
@@ -266,7 +266,13 @@ export default function HousingPage() {
                          {renderSearchResultMessage()}
 
                         <div className="grid md:grid-cols-2 gap-6">
-                            {adsToDisplay.map(ad => (
+                            {isLoading && (
+                                <div className="col-span-full text-center text-muted-foreground py-10">Chargement...</div>
+                            )}
+                            {error && (
+                                <div className="col-span-full text-center text-destructive py-10">Erreur de chargement</div>
+                            )}
+                            {adsToDisplay.map((ad: HousingAd) => (
                                 <Card key={ad.id} className="overflow-hidden flex flex-col">
                                      <div className="relative h-48 w-full">
                                         <Image 
@@ -312,7 +318,7 @@ export default function HousingPage() {
                                     </CardFooter>
                                 </Card>
                             ))}
-                            {adsToDisplay.length === 0 && !hasSearched && (
+                            {adsToDisplay.length === 0 && !hasSearched && !isLoading && !error && (
                                 <div className="col-span-full text-center text-muted-foreground py-10">
                                     <p>Aucune annonce de logement pour le moment.</p>
                                 </div>

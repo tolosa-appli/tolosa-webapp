@@ -92,6 +92,18 @@ const colorMap: Record<string, ColorConfig> = {
     textColor: 'text-purple-800',
     hoverTextColor: 'group-hover:text-purple-900',
   },
+  teal: {
+    gradient: 'from-teal-500 to-cyan-600',
+    bgColor: 'from-teal-50 to-cyan-50',
+    textColor: 'text-teal-800',
+    hoverTextColor: 'group-hover:text-teal-900',
+  },
+  red: {
+    gradient: 'from-red-500 to-rose-600',
+    bgColor: 'from-red-50 to-rose-50',
+    textColor: 'text-red-800',
+    hoverTextColor: 'group-hover:text-red-900',
+  },
 };
 
 export const getColorConfig = (color: string): ColorConfig => {

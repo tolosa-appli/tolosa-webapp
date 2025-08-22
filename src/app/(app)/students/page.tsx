@@ -36,15 +36,11 @@ type Sortie = {
   dataAiHint?: string;
 };
 
-const sortiesEtudiantesData: Sortie[] = [
-  { id: '1', title: 'Soirée intégration BDE', theme: 'Fête', date: '2024-09-12T21:00:00Z', location: 'Salle Le Phare, Tournefeuille', description: 'La plus grosse soirée de l\'année pour bien commencer !', participants: 250, image: 'https://placehold.co/600x400.png', dataAiHint: 'student party' },
-  { id: '2', title: 'Afterwork étudiants & jeunes pros', theme: 'Réseautage', date: '2024-09-19T18:30:00Z', location: 'Bar Le Wallace, Toulouse', description: 'Rencontrez des étudiants et des jeunes diplômés pour échanger.', participants: 40, image: 'https://placehold.co/600x400.png', dataAiHint: 'people networking' },
-  { id: '3', title: 'Tournoi de jeux vidéo', theme: 'Jeux', date: '2024-09-28T14:00:00Z', location: 'E-sport Center, Montaudran', description: 'Affrontez-vous sur les jeux du moment. Lots à gagner !', participants: 64, image: 'https://placehold.co/600x400.png', dataAiHint: 'esports tournament' },
-  { id: '4', title: 'Session de révision collective', theme: 'Études', date: '2024-10-05T10:00:00Z', location: 'Bibliothèque Universitaire Centrale', description: 'Préparons les partiels ensemble. Motivation garantie !', participants: 18, image: 'https://placehold.co/600x400.png', dataAiHint: 'students studying' },
-];
+import { useGetStudentOutings, type StudentOuting } from '@/hooks/useStudents';
 
 export default function StudentsPage() {
   const [isClient, setIsClient] = useState(false);
+  const { data: outings = [], isLoading, error } = useGetStudentOutings();
 
   useEffect(() => {
     setIsClient(true);
@@ -90,7 +86,13 @@ export default function StudentsPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {sortiesEtudiantesData.map((sortie) => (
+            {isLoading && (
+              <div className="col-span-full text-center text-muted-foreground py-10">Chargement...</div>
+            )}
+            {error && (
+              <div className="col-span-full text-center text-destructive py-10">Erreur de chargement</div>
+            )}
+            {outings.map((sortie: StudentOuting) => (
               <Card key={sortie.id} className="flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="relative h-48 w-full">
                   <Image src={sortie.image} alt={sortie.title} layout="fill" objectFit="cover" data-ai-hint={sortie.dataAiHint} />
@@ -126,7 +128,7 @@ export default function StudentsPage() {
                 </CardFooter>
               </Card>
             ))}
-             {sortiesEtudiantesData.length === 0 && (
+             {outings.length === 0 && !isLoading && !error && (
                 <div className="col-span-full text-center text-muted-foreground py-10">
                     <p>Aucune sortie étudiante n'est prévue pour le moment.</p>
                 </div>

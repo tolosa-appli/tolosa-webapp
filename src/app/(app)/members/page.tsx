@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, UserX, UserPlus, UserCheck, UserMinus, Ban, MessageSquare, Flag, Search, Handshake } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { initialMembersData, type Member, type MemberRole } from './data';
+import { useGetMembers, type Member, type MemberRole } from '@/hooks/useMembers';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -27,7 +27,8 @@ const currentUser = {
 
 export default function MembersPage() {
   const { toast } = useToast();
-  const [members, setMembers] = useState(initialMembersData);
+  const { data: fetchedMembers = [], isLoading, error } = useGetMembers();
+  const [members, setMembers] = useState<Member[]>([]);
   const [sortOption, setSortOption] = useState('alphabetical');
   const [searchTerm, setSearchTerm] = useState('');
   const [isClient, setIsClient] = useState(false);
@@ -35,6 +36,14 @@ export default function MembersPage() {
   useEffect(() => {
     setIsClient(true);
   }, []);
+  // Initialize local members state once when data arrives to avoid update loops
+  const [initialized, setInitialized] = useState(false);
+  useEffect(() => {
+    if (!initialized && fetchedMembers.length > 0) {
+      setMembers(fetchedMembers);
+      setInitialized(true);
+    }
+  }, [initialized, fetchedMembers]);
 
   const handleConnectionAction = (memberId: string, action: 'connect' | 'unfriend' | 'block') => {
     setMembers(prevMembers => prevMembers.map(member => {
@@ -221,6 +230,16 @@ export default function MembersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {isLoading && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">Chargement...</TableCell>
+                  </TableRow>
+                )}
+                {error && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center text-destructive">Erreur de chargement</TableCell>
+                  </TableRow>
+                )}
                 {filteredAndSortedMembers.length > 0 ? (
                   filteredAndSortedMembers.map((member) => (
                     <TableRow key={member.id}>

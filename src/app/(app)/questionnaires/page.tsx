@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { questionnairesData } from './data';
+import { useGetQuestionnaires, type QuestionnaireAd } from '@/hooks/useQuestionnaires';
 
 // Schema for the form
 const questionnaireSchema = z.object({
@@ -101,8 +101,9 @@ export default function QuestionnairesPage() {
         setSearchTerm(e.target.value);
     };
 
+    const { data: questionnaires = [], isLoading, error } = useGetQuestionnaires();
     const filteredAndSortedAds = useMemo(() => {
-        let ads = [...questionnairesData];
+        let ads = [...questionnaires];
 
         if (searchTerm.length >= 3) {
             const lowercasedTerm = searchTerm.toLowerCase();
@@ -132,9 +133,9 @@ export default function QuestionnairesPage() {
         }
 
         return ads;
-    }, [searchTerm, sortOption]);
+    }, [searchTerm, sortOption, questionnaires]);
     
-    const displayAds = searchTerm.length < 3 ? questionnairesData : filteredAndSortedAds;
+    const displayAds = searchTerm.length < 3 ? questionnaires : filteredAndSortedAds;
     const showEmptySearchMessage = searchTerm.length >= 3 && filteredAndSortedAds.length === 0;
 
 
@@ -209,7 +210,13 @@ export default function QuestionnairesPage() {
                         )}
 
                         <div className="grid md:grid-cols-2 gap-6">
-                            {(displayAds).map(ad => (
+                            {isLoading && (
+                                <div className="col-span-full text-center text-muted-foreground py-10">Chargement...</div>
+                            )}
+                            {error && (
+                                <div className="col-span-full text-center text-destructive py-10">Erreur de chargement</div>
+                            )}
+                            {(displayAds).map((ad: QuestionnaireAd) => (
                                 <Card key={ad.id} className="overflow-hidden flex flex-col group">
                                      <div className="relative h-48 w-full">
                                         <Image src={ad.image} alt={ad.title} layout="fill" objectFit="cover" data-ai-hint={ad.dataAiHint} />
@@ -267,7 +274,7 @@ export default function QuestionnairesPage() {
                                 </Card>
                             ))}
                             
-                             {!showEmptySearchMessage && displayAds.length === 0 && (
+                             {!showEmptySearchMessage && displayAds.length === 0 && !isLoading && !error && (
                                 <div className="col-span-full text-center text-muted-foreground py-10">
                                     <p>Aucune annonce pour le moment.</p>
                                 </div>

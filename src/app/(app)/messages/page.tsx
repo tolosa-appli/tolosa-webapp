@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Send, User, MessageCircle, Edit, Check } from 'lucide-react';
-import { initialMembersData, type Member, type MemberRole } from '@/app/(app)/members/data';
+import { useGetMembers, type Member, type MemberRole } from '@/hooks/useMembers';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -31,18 +31,7 @@ const currentUser = {
 // const currentUser = { id: '1', name: 'Sophie', role: 'admin' as MemberRole };
 // -----------------------------------------
 
-// Mocked conversations data
-const conversationsData: { [key: string]: { id: number; senderId: string; text: string; timestamp: string }[] } = {
-  '2': [ // Conversation with Lucas
-    { id: 1, senderId: '2', text: "Salut Chloé, tu viens à la soirée Tapas ?", timestamp: "Hier à 18:05" },
-    { id: 2, senderId: '3', text: "Hey Lucas ! Oui bien sûr, j'y serai. Tu penses qu'il y aura du monde ?", timestamp: "Hier à 18:10" },
-    { id: 3, senderId: '2', text: "Oui, la sortie est complète ! Ça va être sympa.", timestamp: "Hier à 18:12" },
-  ],
-   '1': [ // Conversation with Sophie (Admin)
-    { id: 1, senderId: '1', text: "Bonjour Chloé, bienvenue sur l'application ! N'hésitez pas si vous avez des questions.", timestamp: "Il y a 2 jours" },
-    { id: 2, senderId: '3', text: "Bonjour Sophie, merci beaucoup pour l'accueil !", timestamp: "Il y a 2 jours" },
-  ]
-};
+import { apiClient } from '@/lib/api-client';
 
 const messageSchema = z.object({
   title: z.string().min(3, { message: 'Le titre doit contenir au moins 3 caractères.' }),
@@ -123,8 +112,9 @@ export default function MessagesPage() {
     const [newMessage, setNewMessage] = useState('');
     const [isComposeOpen, setIsComposeOpen] = useState(false);
     
+    const { data: allMembers = [] } = useGetMembers();
     // Admins/Mods can message anyone, regular users only connected friends + staff
-    const messageableContacts = initialMembersData.filter(member => {
+    const messageableContacts = allMembers.filter(member => {
         if (member.id === currentUser.id) return false;
         if (currentUser.role !== 'user') return true; // Admins/mods see everyone
         return member.status === 'connected' || member.role === 'admin' || member.role === 'moderator';
@@ -137,9 +127,14 @@ export default function MessagesPage() {
         defaultValues: { recipients: [] },
     });
 
-    const handleSelectContact = (contact: Member) => {
+    const handleSelectContact = async (contact: Member) => {
         setSelectedContact(contact);
-        setMessages(conversationsData[contact.id] || []);
+        try {
+            const res = await apiClient.get<{ id: number; senderId: string; text: string; timestamp: string }[]>(`/messages?contactId=${contact.id}`);
+            setMessages(res.data);
+        } catch {
+            setMessages([]);
+        }
     };
 
     const handleSendMessage = (e: React.FormEvent) => {
@@ -161,10 +156,7 @@ export default function MessagesPage() {
             description: `Votre message a été envoyé à ${selectedContact.username}.`,
         });
         
-        if (!conversationsData[selectedContact.id]) {
-            conversationsData[selectedContact.id] = [];
-        }
-        conversationsData[selectedContact.id].push(messageToSend);
+        // Persisting to backend could be added here later
     };
     
     const onComposeSubmit = (data: MessageFormData) => {
@@ -240,8 +232,8 @@ export default function MessagesPage() {
                     <ScrollArea className="h-[calc(75vh-110px)]">
                         <CardContent className="p-2">
                             {messageableContacts.map(contact => {
-                                const conversation = conversationsData[contact.id] || [];
-                                const lastMessage = conversation.length > 0 ? conversation[conversation.length - 1] : null;
+                                // For preview, we keep empty (fetch is done on select)
+                                const lastMessage = null;
                                 
                                 let preview;
                                 if (lastMessage) {

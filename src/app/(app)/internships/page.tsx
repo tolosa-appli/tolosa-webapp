@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { internshipData } from './data';
+import { useGetInternships, type InternshipAd } from '@/hooks/useInternships';
 
 // Schemas for forms
 const offerSchema = z.object({
@@ -259,18 +259,20 @@ export default function InternshipsPage() {
         }
     };
 
+    const { data: internships = [], isLoading, error } = useGetInternships();
+
     const filteredAds = useMemo(() => {
-        if (!hasSearched) return internshipData;
+        if (!hasSearched) return internships;
         if (searchTerm.length < 3) return [];
 
         const lowercasedTerm = searchTerm.toLowerCase();
-        return internshipData.filter(ad =>
+        return internships.filter(ad =>
             ad.title.toLowerCase().includes(lowercasedTerm) ||
             (ad.company && ad.company.toLowerCase().includes(lowercasedTerm)) ||
             ad.city.toLowerCase().includes(lowercasedTerm) ||
             ad.user.name.toLowerCase().includes(lowercasedTerm)
         );
-    }, [searchTerm, hasSearched]);
+    }, [searchTerm, hasSearched, internships]);
 
     const renderSearchResultMessage = () => {
         if (!hasSearched) return null;
@@ -296,7 +298,7 @@ export default function InternshipsPage() {
         }
     };
     
-    const adsToDisplay = hasSearched ? filteredAds : internshipData;
+    const adsToDisplay = hasSearched ? filteredAds : internships;
     
     return (
         <div className="container mx-auto p-4 md:p-8">
@@ -353,7 +355,13 @@ export default function InternshipsPage() {
                          {renderSearchResultMessage()}
 
                         <div className="grid md:grid-cols-2 gap-6">
-                            {adsToDisplay.map(ad => (
+                            {isLoading && (
+                                <div className="col-span-full text-center text-muted-foreground py-10">Chargement...</div>
+                            )}
+                            {error && (
+                                <div className="col-span-full text-center text-destructive py-10">Erreur de chargement</div>
+                            )}
+                            {adsToDisplay.map((ad: InternshipAd) => (
                                 <Card key={ad.id} className="overflow-hidden flex flex-col">
                                     <CardHeader className="flex flex-row justify-between items-start">
                                         <div>
@@ -395,7 +403,7 @@ export default function InternshipsPage() {
                                     </CardFooter>
                                 </Card>
                             ))}
-                            {adsToDisplay.length === 0 && !hasSearched && (
+                            {adsToDisplay.length === 0 && !hasSearched && !isLoading && !error && (
                                 <div className="col-span-full text-center text-muted-foreground py-10">
                                     <p>Aucune annonce pour le moment.</p>
                                 </div>

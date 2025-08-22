@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { networkGamesData, type NetworkGameAd } from './data';
+import { useGetNetworkGames, type NetworkGameAd } from '@/hooks/useNetworkGames';
 
 const platformOptions = ['PC', 'PlayStation', 'Xbox', 'Nintendo Switch', 'Mobile', 'Steam Deck', 'Cloud Gaming', 'jeux sociaux ou hybrides', 'Autre plateforme'] as const;
 
@@ -120,8 +120,10 @@ export default function NetworkGamesPage() {
         setSearchTerm(e.target.value);
     };
     
+    const { data: networkGames = [], isLoading, error } = useGetNetworkGames();
+
     const filteredGames = useMemo(() => {
-        let games = [...networkGamesData];
+        let games = [...networkGames];
 
         if (platformFilter !== 'all') {
             games = games.filter(game => game.platform === platformFilter);
@@ -137,7 +139,7 @@ export default function NetworkGamesPage() {
         }
 
         return games.sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime());
-    }, [searchTerm, platformFilter]);
+    }, [searchTerm, platformFilter, networkGames]);
 
     return (
         <div className="container mx-auto p-4 md:p-8">
@@ -196,7 +198,13 @@ export default function NetworkGamesPage() {
                     <div>
                         <h2 className="text-2xl font-bold font-headline mb-4">Annonces récentes</h2>
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredGames.map(ad => (
+                            {isLoading && (
+                                <div className="col-span-full text-center text-muted-foreground py-10">Chargement...</div>
+                            )}
+                            {error && (
+                                <div className="col-span-full text-center text-destructive py-10">Erreur de chargement</div>
+                            )}
+                            {filteredGames.map((ad: NetworkGameAd) => (
                                 <Card key={ad.id} className="overflow-hidden flex flex-col group">
                                      <div className="relative h-48 w-full">
                                         <Image 

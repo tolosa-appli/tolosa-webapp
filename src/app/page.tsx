@@ -13,6 +13,7 @@ import {
   Handshake,
   Heart,
   Languages,
+  Users,
 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import GoogleTranslate from '@/components/google-translate';
@@ -205,6 +206,9 @@ export default function HomePage() {
                   const gradient = getGradient(feature.color);
                   const featureUrl = getFeatureUrl(feature.slug, false); // false = not logged in
                   
+                  // Debug logging
+                  console.log('Feature:', feature.title, 'Icon:', feature.icon, 'IconComponent:', IconComponent);
+                  
                   return (
                     <Link href={featureUrl} key={feature.id}>
                       <Card className="group h-full border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-white/80 backdrop-blur-sm overflow-hidden">
@@ -212,11 +216,19 @@ export default function HomePage() {
                         
                         <CardHeader className="relative">
                           <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-4 shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
-                            <IconComponent className="w-8 h-8 text-white" />
+                            {IconComponent ? (
+                              <IconComponent className="w-8 h-8 text-white" />
+                            ) : (
+                              <Users className="w-8 h-8 text-white" />
+                            )}
                           </div>
                           <CardTitle className="text-lg font-bold text-gray-800 group-hover:text-gray-900 transition-colors">
                             {feature.title}
                           </CardTitle>
+                          {/* Debug info */}
+                          <div className="text-xs text-gray-500">
+                            Icon: {feature.icon}
+                          </div>
                         </CardHeader>
                         
                         <CardContent className="relative">

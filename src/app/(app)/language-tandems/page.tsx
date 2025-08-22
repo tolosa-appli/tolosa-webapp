@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, PlusCircle, Languages, User, Users, Check, Clock, Video } from 'lucide-react';
-import { tandemOffers, type TandemOffer } from './data';
+import { useGetTandems, type TandemOffer } from '@/hooks/useTandems';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { FlagIcon } from 'react-flag-kit';
@@ -32,14 +32,18 @@ export default function LanguageTandemsPage() {
   const [statuses, setStatuses] = useState<Record<string, RegistrationStatus>>({});
   const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
 
+  const { data: fetchedTandems, isLoading, error } = useGetTandems();
+
   useEffect(() => {
     setIsClient(true);
-    const initialCounts: Record<string, number> = {};
-    tandemOffers.forEach(offer => {
-      initialCounts[offer.id] = offer.participants.length;
-    });
-    setParticipantCounts(initialCounts);
   }, []);
+
+  useEffect(() => {
+    if (!fetchedTandems) return;
+    const initialCounts: Record<string, number> = {};
+    fetchedTandems.forEach(offer => { initialCounts[offer.id] = offer.participants.length; });
+    setParticipantCounts(initialCounts);
+  }, [fetchedTandems]);
 
   const handleRegistration = (offer: TandemOffer) => {
     const currentParticipants = participantCounts[offer.id] || 0;
@@ -132,7 +136,13 @@ export default function LanguageTandemsPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {tandemOffers.map((offer) => (
+            {isLoading && (
+              <div className="col-span-full text-center text-muted-foreground py-10">Chargement...</div>
+            )}
+            {error && (
+              <div className="col-span-full text-center text-destructive py-10">Erreur de chargement</div>
+            )}
+            {(fetchedTandems ?? []).map((offer) => (
               <Card key={offer.id} className="flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
                 <CardHeader className="items-center text-center p-4 bg-muted/30 relative">
                     {offer.isOnline && (
@@ -175,7 +185,7 @@ export default function LanguageTandemsPage() {
                 </CardFooter>
               </Card>
             ))}
-             {tandemOffers.length === 0 && (
+             {(fetchedTandems?.length ?? 0) === 0 && !isLoading && !error && (
                 <div className="col-span-full text-center text-muted-foreground py-10">
                     <p>Aucun membre ne propose de tandem pour le moment.</p>
                 </div>
